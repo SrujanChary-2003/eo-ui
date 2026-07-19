@@ -15,13 +15,23 @@ export async function getAdminVendors(params = {}) {
   return data;
 }
 
-export async function verifyVendor(vendorId) {
-  const { data } = await apiClient.patch(`/admin/vendors/${vendorId}/verify`);
+export async function verifyVendor(vendorId, payload = { approve: true }) {
+  const { data } = await apiClient.patch(`/admin/vendors/${vendorId}/verify`, payload);
   return data;
 }
 
 export async function deleteVendor(vendorId) {
   const { data } = await apiClient.delete(`/admin/vendors/${vendorId}`);
+  return data;
+}
+
+export async function getAdminEvents(params = {}) {
+  const { data } = await apiClient.get("/admin/events", { params });
+  return data;
+}
+
+export async function reviewEvent(eventId, payload = { approve: true }) {
+  const { data } = await apiClient.patch(`/admin/events/${eventId}/review`, payload);
   return data;
 }
 

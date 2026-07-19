@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Alert from "../../components/ui/Alert";
+import {
+  getApiErrorMessage,
+  getFieldErrors,
+  validatePassword,
+} from "../../utils/authErrors";
 
 const PASSWORD_HINT =
   "Min 8 chars with uppercase, lowercase, number, and special character.";
@@ -19,26 +24,36 @@ export default function SignUpPage() {
     role: "customer",
   });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
+
+    const passwordError = validatePassword(form.password);
+    if (passwordError) {
+      setFieldErrors({ password: passwordError });
+      setError(passwordError);
+      return;
+    }
+
     setLoading(true);
 
     try {
       await register(form);
-      navigate("/pending-verification", { state: { email: form.email } });
+      navigate("/pending-verification", { state: { email: form.email.trim().toLowerCase() } });
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.[0]?.message ||
-        "Registration failed";
-      setError(message);
+      const fields = getFieldErrors(err);
+      setFieldErrors(fields);
+      setError(getApiErrorMessage(err, "Registration failed"));
     } finally {
       setLoading(false);
     }
@@ -59,6 +74,7 @@ export default function SignUpPage() {
             value={form.firstName}
             onChange={handleChange}
             placeholder="John"
+            error={fieldErrors.firstName}
             required
           />
           <Input
@@ -67,6 +83,7 @@ export default function SignUpPage() {
             value={form.lastName}
             onChange={handleChange}
             placeholder="Doe"
+            error={fieldErrors.lastName}
             required
           />
         </div>
@@ -77,6 +94,7 @@ export default function SignUpPage() {
           value={form.email}
           onChange={handleChange}
           placeholder="you@example.com"
+          error={fieldErrors.email}
           required
         />
         <Input
@@ -86,6 +104,8 @@ export default function SignUpPage() {
           value={form.password}
           onChange={handleChange}
           placeholder="••••••••"
+          error={fieldErrors.password}
+          minLength={8}
           required
         />
         <p className="text-xs text-slate-500">{PASSWORD_HINT}</p>

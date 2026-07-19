@@ -1,9 +1,46 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { NavIcon } from "../components/navigation/icons";
+import TopNavbar from "../components/navigation/TopNavbar";
+
+const NAV = {
+  customer: [
+    { to: "/dashboard", label: "Overview", icon: "overview" },
+    { to: "/events", label: "My Events", icon: "events" },
+    { to: "/vendors", label: "Find Vendors", icon: "vendors" },
+  ],
+  vendor: [
+    { to: "/dashboard", label: "Overview", icon: "overview" },
+    { to: "/vendor/profile", label: "Business Profile", icon: "profile" },
+    { to: "/vendor/services", label: "My Services", icon: "services" },
+    { to: "/vendor/bookings", label: "Bookings", icon: "bookings" },
+  ],
+  admin: [
+    { to: "/dashboard", label: "Overview", icon: "overview" },
+    { to: "/admin/users", label: "Users", icon: "users" },
+  ],
+};
+
+const ADMIN_SETTINGS = [
+  { to: "/admin/events", label: "Approve Events", icon: "approveEvents" },
+  { to: "/admin/vendors", label: "Approve Vendors", icon: "approveVendors" },
+];
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [open, setOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const links = useMemo(() => NAV[user?.role] || NAV.customer, [user?.role]);
+  const isAdmin = user?.role === "admin";
+  const settingsActive = ADMIN_SETTINGS.some((item) => location.pathname.startsWith(item.to));
+
+  useEffect(() => {
+    if (settingsActive) setSettingsOpen(true);
+  }, [settingsActive]);
 
   const handleLogout = async () => {
     await logout();
@@ -11,34 +48,134 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-white/10 bg-slate-900/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-bold text-white">
-              ES
-            </span>
-            <span className="text-lg font-semibold">EventSphere</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-slate-400 sm:inline">
-              {user?.firstName} {user?.lastName}
-              <span className="ml-2 rounded-full bg-violet-500/20 px-2 py-0.5 text-xs capitalize text-violet-300">
-                {user?.role}
+    <div className="app-shell">
+      <div className="flex min-h-screen">
+        <aside
+          className={`app-sidebar sticky top-0 z-40 flex h-screen flex-col border-r transition-all ${
+            open ? "w-64" : "w-[4.5rem]"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--app-border)] px-3 py-4">
+            <NavLink to="/dashboard" className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-bold text-white shadow-lg shadow-violet-500/30">
+                ES
               </span>
-            </span>
+              {open && (
+                <span className="truncate text-lg font-semibold tracking-tight text-[var(--app-text)]">
+                  EventSphere
+                </span>
+              )}
+            </NavLink>
             <button
-              onClick={handleLogout}
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm transition hover:bg-white/5"
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="app-icon-btn hidden h-9 w-9 items-center justify-center rounded-lg lg:inline-flex"
+              aria-label="Collapse sidebar"
             >
-              Logout
+              <NavIcon name={open ? "sidebarClose" : "sidebarOpen"} className="h-4 w-4" />
             </button>
           </div>
+
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.to === "/dashboard"}
+                title={link.label}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                    isActive ? "app-nav-item-active" : "app-nav-item"
+                  } ${open ? "" : "justify-center"}`
+                }
+              >
+                <NavIcon name={link.icon} className="h-5 w-5 shrink-0" />
+                {open && <span className="truncate">{link.label}</span>}
+              </NavLink>
+            ))}
+
+            {isAdmin && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!open) {
+                      setOpen(true);
+                      setSettingsOpen(true);
+                      return;
+                    }
+                    setSettingsOpen((v) => !v);
+                  }}
+                  title="Settings"
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                    settingsActive ? "app-nav-item-active" : "app-nav-item"
+                  } ${open ? "" : "justify-center"}`}
+                >
+                  <NavIcon name="settings" className="h-5 w-5 shrink-0" />
+                  {open && (
+                    <>
+                      <span className="flex-1 truncate text-left">Settings</span>
+                      <NavIcon
+                        name="chevronDown"
+                        className={`h-4 w-4 transition ${settingsOpen ? "rotate-180" : ""}`}
+                      />
+                    </>
+                  )}
+                </button>
+
+                {open && settingsOpen && (
+                  <div className="mt-1 space-y-1 border-l border-[var(--app-border)] ml-4 pl-2">
+                    {ADMIN_SETTINGS.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        title={item.label}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
+                            isActive ? "app-nav-item-active" : "app-nav-item"
+                          }`
+                        }
+                      >
+                        <NavIcon name={item.icon} className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </nav>
+
+          <div className="border-t border-[var(--app-border)] p-3">
+            {open ? (
+              <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface-muted)] p-3">
+                <p className="truncate text-sm font-medium text-[var(--app-text)]">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="truncate text-xs capitalize text-[var(--app-accent-text)]">{user?.role}</p>
+              </div>
+            ) : (
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-xs font-bold text-white">
+                {(user?.firstName || "U").slice(0, 1)}
+              </div>
+            )}
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopNavbar
+            user={user}
+            sidebarOpen={open}
+            onToggleSidebar={() => setOpen((v) => !v)}
+            onLogout={handleLogout}
+          />
+          <main className="flex-1 overflow-x-hidden">
+            <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+              <Outlet />
+            </div>
+          </main>
         </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-10">
-        <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

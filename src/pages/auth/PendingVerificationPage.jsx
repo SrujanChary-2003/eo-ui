@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
+import { getApiErrorMessage } from "../../utils/authErrors";
 
 export default function PendingVerificationPage() {
   const { resendVerification } = useAuth();
@@ -26,7 +27,7 @@ export default function PendingVerificationPage() {
       await resendVerification(email);
       setMessage("A new verification code has been sent to your email.");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend verification code");
+      setError(getApiErrorMessage(err, "Failed to resend verification code"));
     } finally {
       setLoading(false);
     }

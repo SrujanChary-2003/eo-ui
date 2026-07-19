@@ -1,49 +1,75 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Alert from "../../components/ui/Alert";
+import { getApiErrorMessage, getFieldErrors } from "../../utils/authErrors";
 
 export default function VerifyEmailPage() {
   const { verifyEmail } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const autoSubmitted = useRef(false);
+
+  const initialEmail =
+    searchParams.get("email") || location.state?.email || "";
+  const initialOtp = searchParams.get("otp") || "";
+
   const [form, setForm] = useState({
-    email: searchParams.get("email") || "",
-    otp: searchParams.get("otp") || "",
+    email: initialEmail,
+    otp: initialOtp,
   });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const email = searchParams.get("email");
-    const otp = searchParams.get("otp");
-    if (email && otp) {
-      setForm({ email, otp });
-    }
-  }, [searchParams]);
-
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const submitVerification = async (payload) => {
     setError("");
+    setFieldErrors({});
     setSuccess("");
     setLoading(true);
 
     try {
-      await verifyEmail(form);
+      await verifyEmail(payload);
       setSuccess("Email verified! You can now sign in.");
-      setTimeout(() => navigate("/signin"), 2000);
+      setTimeout(() => navigate("/signin"), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || "Verification failed");
+      setFieldErrors(getFieldErrors(err));
+      setError(getApiErrorMessage(err, "Verification failed"));
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    const email = searchParams.get("email") || location.state?.email || "";
+    const otp = searchParams.get("otp") || "";
+    if (email || otp) {
+      setForm((prev) => ({
+        email: email || prev.email,
+        otp: otp || prev.otp,
+      }));
+    }
+
+    if (email && otp && !autoSubmitted.current) {
+      autoSubmitted.current = true;
+      submitVerification({ email, otp });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, location.state]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await submitVerification(form);
   };
 
   return (
@@ -63,6 +89,7 @@ export default function VerifyEmailPage() {
           name="email"
           value={form.email}
           onChange={handleChange}
+          error={fieldErrors.email}
           required
         />
         <Input
@@ -72,6 +99,7 @@ export default function VerifyEmailPage() {
           onChange={handleChange}
           placeholder="123456"
           maxLength={6}
+          error={fieldErrors.otp}
           required
         />
         <Button type="submit" className="w-full py-3" disabled={loading}>

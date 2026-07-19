@@ -1,24 +1,29 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Alert from "../../components/ui/Alert";
+import { getApiErrorMessage, getFieldErrors } from "../../utils/authErrors";
 
 export default function SignInPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setLoading(true);
 
     try {
@@ -26,14 +31,16 @@ export default function SignInPage() {
       navigate("/dashboard");
     } catch (err) {
       const errorCode = err.response?.data?.errorCode;
-      const message = err.response?.data?.message || "Sign in failed";
 
       if (errorCode === "EMAIL_NOT_VERIFIED") {
-        navigate("/pending-verification", { state: { email: form.email } });
+        navigate("/pending-verification", {
+          state: { email: form.email.trim().toLowerCase() },
+        });
         return;
       }
 
-      setError(message);
+      setFieldErrors(getFieldErrors(err));
+      setError(getApiErrorMessage(err, "Sign in failed"));
     } finally {
       setLoading(false);
     }
@@ -54,6 +61,7 @@ export default function SignInPage() {
           value={form.email}
           onChange={handleChange}
           placeholder="you@example.com"
+          error={fieldErrors.email}
           required
         />
         <Input
@@ -63,6 +71,7 @@ export default function SignInPage() {
           value={form.password}
           onChange={handleChange}
           placeholder="••••••••"
+          error={fieldErrors.password}
           required
         />
         <Button type="submit" className="w-full py-3" disabled={loading}>

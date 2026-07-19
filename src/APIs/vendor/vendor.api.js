@@ -5,6 +5,16 @@ export async function getVendorDashboard() {
   return data;
 }
 
+export async function getVendorProfile() {
+  const { data } = await apiClient.get("/vendor/profile");
+  return data;
+}
+
+export async function updateVendorProfile(payload) {
+  const { data } = await apiClient.patch("/vendor/profile", payload);
+  return data;
+}
+
 export async function getVendorBookings(params = {}) {
   const { data } = await apiClient.get("/vendor/bookings", { params });
   return data;
@@ -12,6 +22,11 @@ export async function getVendorBookings(params = {}) {
 
 export async function acceptBooking(bookingId) {
   const { data } = await apiClient.patch(`/vendor/bookings/${bookingId}/accept`);
+  return data;
+}
+
+export async function declineBooking(bookingId) {
+  const { data } = await apiClient.patch(`/vendor/bookings/${bookingId}/decline`);
   return data;
 }
 
@@ -44,5 +59,10 @@ export async function uploadPortfolio(formData) {
   const { data } = await apiClient.post("/vendor/portfolio", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return data;
+}
+
+export async function deletePortfolioItem(proofId) {
+  const { data } = await apiClient.delete(`/vendor/portfolio/${proofId}`);
   return data;
 }

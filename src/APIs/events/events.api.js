@@ -20,7 +20,17 @@ export async function updateEvent(eventId, payload) {
   return data;
 }
 
+export async function selectEventVendors(eventId, selections) {
+  const { data } = await apiClient.post(`/events/${eventId}/vendors`, { selections });
+  return data;
+}
+
 export async function deleteEvent(eventId) {
   const { data } = await apiClient.delete(`/events/${eventId}`);
+  return data;
+}
+
+export async function getCatalog() {
+  const { data } = await apiClient.get("/events/catalog");
   return data;
 }

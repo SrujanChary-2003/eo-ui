@@ -2,8 +2,9 @@ export default function Button({ children, variant = "primary", className = "", 
   const variants = {
     primary:
       "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25 hover:from-violet-500 hover:to-fuchsia-500",
-    secondary: "border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10",
-    ghost: "text-slate-300 hover:text-white hover:bg-white/5",
+    secondary:
+      "border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-muted)]",
+    ghost: "text-[var(--app-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]",
   };
 
   return (
