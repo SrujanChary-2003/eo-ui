@@ -1,11 +1,12 @@
 @import "tailwindcss";
+@import "@onesaz/tailwind-config/v4.css";
 
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --app-bg: #f4f6fb;
+  --app-bg: #f7f8fb;
   --app-bg-accent: radial-gradient(ellipse at top right, rgba(124, 58, 237, 0.12), transparent 45%),
     radial-gradient(ellipse at bottom left, rgba(14, 165, 233, 0.08), transparent 40%);
   --app-surface: #ffffff;
@@ -17,22 +18,23 @@
   --app-muted: #64748b;
   --app-faint: #94a3b8;
   --app-accent: #7c3aed;
-  --app-accent-2: #c026d3;
+  --app-accent-2: #6d28d9;
   --app-accent-soft: rgba(124, 58, 237, 0.12);
   --app-accent-text: #6d28d9;
-  --app-nav: rgba(255, 255, 255, 0.88);
-  --app-sidebar: rgba(255, 255, 255, 0.95);
+  --app-nav: rgba(255, 255, 255, 0.9);
+  --app-sidebar: rgba(255, 255, 255, 0.96);
   --app-input: #ffffff;
-  --app-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --app-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
   color-scheme: light;
 }
 
+html.dark,
 html[data-theme="dark"] {
   --app-bg: #020617;
   --app-bg-accent: radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.18), transparent 45%),
     radial-gradient(ellipse at bottom left, rgba(217, 70, 239, 0.1), transparent 40%);
-  --app-surface: rgba(15, 23, 42, 0.72);
-  --app-surface-2: rgba(15, 23, 42, 0.9);
+  --app-surface: rgba(15, 23, 42, 0.78);
+  --app-surface-2: rgba(15, 23, 42, 0.92);
   --app-surface-muted: rgba(30, 41, 59, 0.7);
   --app-border: rgba(255, 255, 255, 0.1);
   --app-text: #f8fafc;
@@ -40,10 +42,10 @@ html[data-theme="dark"] {
   --app-muted: #94a3b8;
   --app-faint: #64748b;
   --app-accent: #8b5cf6;
-  --app-accent-2: #d946ef;
+  --app-accent-2: #a78bfa;
   --app-accent-soft: rgba(139, 92, 246, 0.2);
   --app-accent-text: #c4b5fd;
-  --app-nav: rgba(15, 23, 42, 0.82);
+  --app-nav: rgba(15, 23, 42, 0.86);
   --app-sidebar: rgba(15, 23, 42, 0.94);
   --app-input: rgba(2, 6, 23, 0.55);
   --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
@@ -68,6 +70,7 @@ body {
   background-image: var(--app-bg-accent);
   color: var(--app-text);
   min-height: 100svh;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .app-sidebar {
@@ -116,6 +119,7 @@ body {
   border: 1px solid var(--app-border);
   background: var(--app-surface);
   color: var(--app-text-secondary);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .app-icon-btn:hover {
@@ -136,4 +140,24 @@ body {
 .app-chip {
   background: var(--app-accent-soft);
   color: var(--app-accent-text);
+}
+
+@layer base {
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+/* Global brand loader (ES logo) */
+.brand-loader-ring {
+  border: 2px solid color-mix(in srgb, var(--app-accent) 25%, transparent);
+  border-top-color: var(--app-accent);
+  animation: brand-loader-spin 0.85s linear infinite;
+}
+
+@keyframes brand-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -15,9 +15,9 @@ export default function AdminUsersPage() {
     <div>
       <PageHeader title="Users" subtitle="Customers, vendors, and account status." />
       {error && <div className="mb-4"><Alert message={error} /></div>}
-      <div className="overflow-hidden rounded-2xl border border-white/10">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-900/80 text-slate-400">
+          <thead className="bg-muted/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Email</th>
@@ -28,10 +28,10 @@ export default function AdminUsersPage() {
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-t border-white/5">
-                <td className="px-4 py-3 text-white">{user.firstName} {user.lastName}</td>
-                <td className="px-4 py-3 text-slate-300">{user.email}</td>
-                <td className="px-4 py-3 capitalize text-slate-300">{user.role}</td>
+              <tr key={user.id} className="border-t border-border">
+                <td className="px-4 py-3 text-foreground">{user.firstName} {user.lastName}</td>
+                <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
+                <td className="px-4 py-3 capitalize text-muted-foreground">{user.role}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={user.isActive ? "approved" : "rejected"} />
                 </td>

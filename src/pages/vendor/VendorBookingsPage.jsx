@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Typography } from "@onesaz/ui";
 import { useVendorWorkspace } from "../../hooks/useVendorWorkspace";
 import Alert from "../../components/ui/Alert";
+import AppCard from "../../components/ui/AppCard";
 import Button from "../../components/ui/Button";
 import { EmptyState, PageHeader, StatusBadge } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
@@ -29,22 +31,29 @@ export default function VendorBookingsPage() {
 
       <div className="space-y-4">
         {bookings.map((item) => (
-          <div key={item.event.id} className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
+          <AppCard key={item.event.id} contentClassName="p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">{item.event.title}</h2>
-                <p className="text-sm text-slate-400">
+                <Typography variant="h6">{item.event.title}</Typography>
+                <Typography variant="body2" className="text-muted-foreground">
                   {item.customer?.firstName} {item.customer?.lastName} · {item.event.location}
-                </p>
-                <p className="text-xs text-slate-500">{new Date(item.event.eventDate).toLocaleString()}</p>
+                </Typography>
+                <Typography variant="caption" className="text-muted-foreground">
+                  {new Date(item.event.eventDate).toLocaleString()}
+                </Typography>
               </div>
               <StatusBadge status={item.event.status} />
             </div>
             <div className="mt-4 space-y-2">
               {(item.mySelections || []).map((sel) => (
-                <div key={sel._id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 px-3 py-2">
+                <div
+                  key={sel._id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-3 py-2"
+                >
                   <div className="text-sm">
-                    <p className="capitalize text-slate-200">{sel.category?.replaceAll("_", " ")}</p>
+                    <Typography variant="body2" className="capitalize text-foreground">
+                      {sel.category?.replaceAll("_", " ")}
+                    </Typography>
                     <StatusBadge status={sel.status} />
                   </div>
                   {sel.status === "requested" && item.event.status === "approved" && (
@@ -56,7 +65,7 @@ export default function VendorBookingsPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </AppCard>
         ))}
       </div>
     </div>

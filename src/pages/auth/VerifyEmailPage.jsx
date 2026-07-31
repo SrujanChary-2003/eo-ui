@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Typography } from "@onesaz/ui";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -74,10 +75,12 @@ export default function VerifyEmailPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-white">Verify your email</h1>
-      <p className="mb-6 text-sm text-slate-400">
+      <Typography variant="h4" className="mb-2 font-bold">
+        Verify your email
+      </Typography>
+      <Typography variant="body2" className="mb-6 text-muted-foreground">
         Enter the 6-digit code sent to your email address.
-      </p>
+      </Typography>
 
       {error && <div className="mb-4"><Alert message={error} /></div>}
       {success && <div className="mb-4"><Alert type="success" message={success} /></div>}
@@ -102,17 +105,17 @@ export default function VerifyEmailPage() {
           error={fieldErrors.otp}
           required
         />
-        <Button type="submit" className="w-full py-3" disabled={loading}>
-          {loading ? "Verifying..." : "Verify email"}
+        <Button type="submit" className="w-full py-3" loading={loading}>
+          Verify email
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Need a new code?{" "}
         <Link
           to="/pending-verification"
           state={{ email: form.email }}
-          className="font-medium text-violet-400 hover:text-violet-300"
+          className="font-medium text-accent hover:underline"
         >
           Resend verification
         </Link>

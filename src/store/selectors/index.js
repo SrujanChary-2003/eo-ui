@@ -13,6 +13,7 @@ export const selectEvents = (state) => state.events.list;
 export const selectCurrentEvent = (state) => state.events.current;
 export const selectEventCatalog = (state) => state.events.catalog;
 export const selectEventsLoading = (state) => state.events.loading;
+export const selectEventDetailLoading = (state) => state.events.detailLoading;
 export const selectEventsError = (state) => state.events.error;
 
 export const selectVendors = (state) => state.vendors.list;
@@ -30,3 +31,11 @@ export const selectAdminUsers = (state) => state.admin.users;
 export const selectAdminVendors = (state) => state.admin.vendors;
 export const selectAdminEvents = (state) => state.admin.events;
 export const selectAdminError = (state) => state.admin.error;
+
+export const selectUiState = (state) => state.ui;
+export const selectGlobalLoadingMessage = (state) => state.ui.message;
+export const selectIsGlobalLoading = (state) =>
+  state.ui.pendingRequests > 0 ||
+  state.ui.routeLoading ||
+  state.ui.manualLocks > 0 ||
+  Boolean(state.auth.loading);

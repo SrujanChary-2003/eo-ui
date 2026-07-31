@@ -1,33 +1,41 @@
 import { Link, Outlet } from "react-router-dom";
+import ThemeControls from "../components/theme/ThemeControls";
+import Button from "../components/ui/Button";
+import { APP_NAME, APP_SHORT_NAME } from "../constants";
 
 export default function PublicLayout() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm font-bold text-white">
-              ES
+    <div className="app-shell min-h-screen">
+      <header className="app-navbar sticky top-0 z-50 w-full border-b">
+        <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
+          <Link to="/" className="flex min-w-0 items-center gap-2 justify-self-start sm:gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--app-accent)] text-sm font-bold text-white">
+              {APP_SHORT_NAME}
             </span>
-            <span className="text-lg font-semibold tracking-tight">EventSphere</span>
+            <span className="truncate text-base font-semibold tracking-tight text-[var(--app-text)] sm:text-lg">
+              {APP_NAME}
+            </span>
           </Link>
-          <nav className="hidden items-center gap-8 text-sm text-slate-300 md:flex">
-            <a href="#features" className="transition hover:text-white">Features</a>
-            <a href="#events" className="transition hover:text-white">Events</a>
-            <a href="#how-it-works" className="transition hover:text-white">How it works</a>
+
+          <nav className="hidden items-center justify-center gap-6 text-sm text-[var(--app-muted)] md:flex lg:gap-8">
+            <a href="#features" className="whitespace-nowrap transition hover:text-[var(--app-text)]">
+              Features
+            </a>
+            <a href="#how-it-works" className="whitespace-nowrap transition hover:text-[var(--app-text)]">
+              How it works
+            </a>
           </nav>
-          <div className="flex items-center gap-3">
+
+          <div className="flex shrink-0 items-center justify-end gap-1.5 justify-self-end sm:gap-3">
+            <ThemeControls />
             <Link
               to="/signin"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-200 transition hover:text-white"
+              className="hidden rounded-lg px-3 py-2 text-sm font-medium text-[var(--app-text-secondary)] transition hover:text-[var(--app-text)] sm:inline"
             >
               Sign in
             </Link>
-            <Link
-              to="/signup"
-              className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition hover:from-violet-500 hover:to-fuchsia-500"
-            >
-              Get started
+            <Link to="/signup">
+              <Button className="!px-3 !py-2 text-sm sm:!px-4">Get started</Button>
             </Link>
           </div>
         </div>

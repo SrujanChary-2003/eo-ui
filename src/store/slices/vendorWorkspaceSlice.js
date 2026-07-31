@@ -88,9 +88,9 @@ export const respondVendorBooking = createAsyncThunk(
 
 export const uploadVendorProof = createAsyncThunk(
   "vendorWorkspace/uploadProof",
-  async (formData, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await vendorApi.uploadPortfolio(formData);
+      const response = await vendorApi.uploadPortfolio(payload);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Failed to upload proof" });

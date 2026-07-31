@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Typography } from "@onesaz/ui";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
@@ -35,14 +36,20 @@ export default function PendingVerificationPage() {
 
   return (
     <div className="text-center">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/20 text-3xl">
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-3xl">
         ✉️
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-white">Check your email</h1>
-      <p className="mb-2 text-sm text-slate-400">
+      <Typography variant="h4" className="mb-2 font-bold">
+        Check your email
+      </Typography>
+      <Typography variant="body2" className="mb-2 text-muted-foreground">
         We sent a 6-digit verification code to
-      </p>
-      {email && <p className="mb-6 font-medium text-violet-300">{email}</p>}
+      </Typography>
+      {email && (
+        <Typography variant="body1" className="mb-6 font-medium text-accent">
+          {email}
+        </Typography>
+      )}
 
       {error && <div className="mb-4"><Alert message={error} /></div>}
       {message && <div className="mb-4"><Alert type="success" message={message} /></div>}
@@ -55,15 +62,16 @@ export default function PendingVerificationPage() {
           variant="secondary"
           className="w-full py-3"
           onClick={handleResend}
-          disabled={loading || !email}
+          loading={loading}
+          disabled={!email}
         >
-          {loading ? "Sending..." : "Resend code"}
+          Resend code
         </Button>
       </div>
 
-      <p className="mt-6 text-sm text-slate-400">
+      <p className="mt-6 text-sm text-muted-foreground">
         Wrong email?{" "}
-        <Link to="/signup" className="font-medium text-violet-400 hover:text-violet-300">
+        <Link to="/signup" className="font-medium text-accent hover:underline">
           Sign up again
         </Link>
       </p>

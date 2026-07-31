@@ -22,10 +22,13 @@ import VendorBookingsPage from "../pages/vendor/VendorBookingsPage";
 import AdminEventsPage from "../pages/admin/AdminEventsPage";
 import AdminVendorsPage from "../pages/admin/AdminVendorsPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
+import ProfilePage from "../pages/ProfilePage";
+import RouteLoadingBridge from "../components/routing/RouteLoadingBridge";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
+      <RouteLoadingBridge />
       <Routes>
         <Route element={<PublicLayout />}>
           <Route index element={<LandingPage />} />
@@ -43,6 +46,7 @@ export default function AppRoutes() {
         <Route element={<PrivateRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="profile" element={<ProfilePage />} />
 
             <Route element={<RoleRoute roles={["customer"]} />}>
               <Route path="events" element={<EventsPage />} />

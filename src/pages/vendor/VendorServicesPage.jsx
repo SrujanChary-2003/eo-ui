@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
+import { Typography } from "@onesaz/ui";
 import { useEvents } from "../../hooks/useEvents";
 import { useVendorWorkspace } from "../../hooks/useVendorWorkspace";
 import Alert from "../../components/ui/Alert";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
-import { EmptyState, PageHeader } from "../../components/ui/PageBits";
+import AppCombobox from "../../components/ui/AppCombobox";
+import AppTextarea from "../../components/ui/AppTextarea";
+import AppCard from "../../components/ui/AppCard";
+import { EmptyState, PageHeader, StatusBadge } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
 
 export default function VendorServicesPage() {
-  const { services, message, loadServices, createService, deleteService, clearMessage } = useVendorWorkspace();
+  const { services, message, loadServices, createService, deleteService, clearMessage } =
+    useVendorWorkspace();
   const { catalog, loadCatalog } = useEvents(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -46,54 +51,88 @@ export default function VendorServicesPage() {
     }
   };
 
+  const categoryOptions = (catalog.serviceCategories || []).map((c) => ({
+    value: c.value,
+    label: c.label,
+  }));
+
   return (
     <div>
       <PageHeader title="My services" subtitle="List what you offer for customer events." />
-      {error && <div className="mb-4"><Alert message={error} /></div>}
-      {message && <div className="mb-4"><Alert type="success" message={message} /></div>}
+      {error && (
+        <div className="mb-4">
+          <Alert message={error} />
+        </div>
+      )}
+      {message && (
+        <div className="mb-4">
+          <Alert type="success" message={message} />
+        </div>
+      )}
 
-      <form onSubmit={onSubmit} className="mb-8 space-y-4 rounded-2xl border border-white/10 bg-slate-900/50 p-6">
-        <Input label="Service title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300">Category</label>
-          <select
-            className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 text-sm text-white"
+      <AppCard className="mb-8">
+        <form onSubmit={onSubmit} className="space-y-4">
+          <Input
+            label="Service title"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+          />
+          <AppCombobox
+            label="Category"
+            options={categoryOptions}
             value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          >
-            {(catalog.serviceCategories || []).map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Price from" type="number" value={form.priceFrom} onChange={(e) => setForm({ ...form, priceFrom: e.target.value })} />
-          <Input label="Price to" type="number" value={form.priceTo} onChange={(e) => setForm({ ...form, priceTo: e.target.value })} />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300">Description</label>
-          <textarea
-            className="min-h-24 w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 text-sm text-white"
+            onChange={(value) => setForm({ ...form, category: value })}
+            required
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Price from"
+              type="number"
+              value={form.priceFrom}
+              onChange={(e) => setForm({ ...form, priceFrom: e.target.value })}
+            />
+            <Input
+              label="Price to"
+              type="number"
+              value={form.priceTo}
+              onChange={(e) => setForm({ ...form, priceTo: e.target.value })}
+            />
+          </div>
+          <AppTextarea
+            label="Description"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
+            rows={4}
           />
-        </div>
-        <Button type="submit">Add service</Button>
-      </form>
+          <Button type="submit">Add service</Button>
+        </form>
+      </AppCard>
 
-      {!services.length && <EmptyState title="No services yet">Add your first offering so customers can book you.</EmptyState>}
+      {!services.length && (
+        <EmptyState title="No services yet">
+          Add your first offering so customers can book you.
+        </EmptyState>
+      )}
 
       <div className="space-y-3">
         {services.map((service) => (
-          <div key={service.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+          <AppCard key={service.id} contentClassName="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
-              <p className="font-medium text-white">{service.title}</p>
-              <p className="text-sm capitalize text-slate-400">
+              <Typography variant="subtitle1" className="font-medium">
+                {service.title}
+              </Typography>
+              <Typography variant="body2" className="capitalize text-muted-foreground">
                 {service.category.replaceAll("_", " ")} · ₹{service.priceFrom}–₹{service.priceTo}
-              </p>
+              </Typography>
             </div>
-            <Button variant="ghost" onClick={() => deleteService(service.id)}>Delete</Button>
-          </div>
+            <div className="flex items-center gap-2">
+              <StatusBadge status={service.isActive ? "approved" : "draft"} />
+              <Button variant="ghost" onClick={() => deleteService(service.id)}>
+                Delete
+              </Button>
+            </div>
+          </AppCard>
         ))}
       </div>
     </div>

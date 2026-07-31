@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { Typography } from "@onesaz/ui";
 import { useAdmin } from "../../hooks/useAdmin";
 import Alert from "../../components/ui/Alert";
+import AppCard from "../../components/ui/AppCard";
 import Button from "../../components/ui/Button";
 import { EmptyState, PageHeader, StatusBadge } from "../../components/ui/PageBits";
 
@@ -20,7 +22,7 @@ export default function AdminVendorsPage() {
             key={value || "all"}
             type="button"
             onClick={() => loadVendors(value ? { status: value } : {})}
-            className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-violet-500/20"
+            className="rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/20 hover:text-foreground"
           >
             {value || "all"}
           </button>
@@ -30,13 +32,13 @@ export default function AdminVendorsPage() {
       {!vendors.length && <EmptyState title="No vendors">No vendor profiles for this filter.</EmptyState>}
       <div className="space-y-3">
         {vendors.map((vendor) => (
-          <div key={vendor.id} className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
+          <AppCard key={vendor.id} contentClassName="p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">{vendor.businessName}</h2>
-                <p className="text-sm text-slate-400">
+                <Typography variant="h6">{vendor.businessName}</Typography>
+                <Typography variant="body2" className="text-muted-foreground">
                   {vendor.user?.firstName} {vendor.user?.lastName} · {vendor.user?.email}
-                </p>
+                </Typography>
               </div>
               <StatusBadge status={vendor.approvalStatus} />
             </div>
@@ -46,7 +48,7 @@ export default function AdminVendorsPage() {
                 <Button variant="secondary" onClick={() => reviewVendor(vendor.id, false, "Incomplete profile")}>Reject</Button>
               </div>
             )}
-          </div>
+          </AppCard>
         ))}
       </div>
     </div>

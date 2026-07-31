@@ -20,6 +20,7 @@ import {
   uploadVendorProof,
 } from "../store/slices/vendorWorkspaceSlice";
 import { updateVendorAvailability } from "../apis/vendor/vendor.api";
+import { toastError, toastSuccess } from "../utils/toast";
 
 export function useVendorWorkspace() {
   const dispatch = useAppDispatch();
@@ -36,6 +37,14 @@ export function useVendorWorkspace() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (message) toastSuccess(message);
+  }, [message]);
+
+  useEffect(() => {
+    if (error) toastError(typeof error === "string" ? error : error?.message || "Something went wrong");
+  }, [error]);
 
   const saveProfile = useCallback(
     async (payload) => {

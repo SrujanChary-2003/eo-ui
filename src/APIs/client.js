@@ -1,4 +1,5 @@
 import axios from "axios";
+import { beginRequest, endRequest } from "../store/slices/uiSlice";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -9,6 +10,24 @@ const apiClient = axios.create({
 });
 
 let accessToken = localStorage.getItem("accessToken") || null;
+let storeRef = null;
+
+/** Call once from main.jsx to avoid circular imports with the Redux store. */
+export function injectStore(store) {
+  storeRef = store;
+}
+
+function trackRequestStart(config) {
+  if (config?.skipGlobalLoader || !storeRef) return;
+  storeRef.dispatch(beginRequest());
+  config.__globalLoaderTracked = true;
+}
+
+function trackRequestEnd(config) {
+  if (!config?.__globalLoaderTracked || !storeRef) return;
+  storeRef.dispatch(endRequest());
+  config.__globalLoaderTracked = false;
+}
 
 export function setAccessToken(token) {
   accessToken = token;
@@ -27,6 +46,7 @@ apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  trackRequestStart(config);
   return config;
 });
 
@@ -42,9 +62,13 @@ function processQueue(error, token = null) {
 }
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    trackRequestEnd(response.config);
+    return response;
+  },
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config || {};
+    trackRequestEnd(originalRequest);
 
     if (
       error.response?.status === 401 &&
@@ -66,7 +90,9 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await apiClient.post("/auth/refresh");
+        const { data } = await apiClient.post("/auth/refresh", null, {
+          skipGlobalLoader: true,
+        });
         const newToken = data.data.accessToken;
         setAccessToken(newToken);
         processQueue(null, newToken);

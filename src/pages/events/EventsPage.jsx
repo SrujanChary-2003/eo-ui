@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { Typography } from "@onesaz/ui";
 import { useEvents } from "../../hooks/useEvents";
 import Alert from "../../components/ui/Alert";
+import AppCard from "../../components/ui/AppCard";
 import Button from "../../components/ui/Button";
+import { LoadingState } from "../../components/ui/LoadingState";
 import { EmptyState, PageHeader, StatusBadge } from "../../components/ui/PageBits";
 
 export default function EventsPage() {
@@ -16,7 +19,7 @@ export default function EventsPage() {
       />
 
       {error && <div className="mb-4"><Alert message={error} /></div>}
-      {loading && <p className="text-slate-400">Loading events...</p>}
+      {loading && <LoadingState label="Loading events..." />}
 
       {!loading && !events.length && (
         <EmptyState title="No events yet">
@@ -27,28 +30,28 @@ export default function EventsPage() {
         </EmptyState>
       )}
 
-      <div className="space-y-3">
-        {events.map((event) => (
-          <Link
-            key={event.id}
-            to={`/events/${event.id}`}
-            className="block rounded-2xl border border-white/10 bg-slate-900/50 p-5 transition hover:border-violet-500/40"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">{event.title}</h2>
-                <p className="mt-1 text-sm capitalize text-slate-400">
-                  {String(event.eventType || "").replaceAll("_", " ")} · {event.location}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {event.eventDate ? new Date(event.eventDate).toLocaleString() : ""}
-                </p>
-              </div>
-              <StatusBadge status={event.status} />
-            </div>
-          </Link>
-        ))}
-      </div>
+      {!loading && (
+        <div className="space-y-3">
+          {events.map((event) => (
+            <Link key={event.id} to={`/events/${event.id}`} className="block">
+              <AppCard className="hover:border-accent/40" contentClassName="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <Typography variant="h6">{event.title}</Typography>
+                    <Typography variant="body2" className="mt-1 capitalize text-muted-foreground">
+                      {String(event.eventType || "").replaceAll("_", " ")} · {event.location}
+                    </Typography>
+                    <Typography variant="caption" className="mt-1 text-muted-foreground">
+                      {event.eventDate ? new Date(event.eventDate).toLocaleString() : ""}
+                    </Typography>
+                  </div>
+                  <StatusBadge status={event.status} />
+                </div>
+              </AppCard>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -10,9 +10,12 @@ export async function updateProfile(payload) {
   return data;
 }
 
-export async function uploadDocument(formData) {
-  const { data } = await apiClient.post("/profile/documents", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export async function uploadAvatar(image) {
+  const { data } = await apiClient.post("/profile/avatar", { image });
+  return data;
+}
+
+export async function deleteAvatar() {
+  const { data } = await apiClient.delete("/profile/avatar");
   return data;
 }

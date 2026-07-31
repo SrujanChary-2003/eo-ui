@@ -1,15 +1,19 @@
-export default function Alert({ type = "error", message }) {
+import { Alert as OsAlert, AlertDescription, AlertTitle } from "@onesaz/ui";
+
+const VARIANT_MAP = {
+  error: "error",
+  success: "success",
+  info: "info",
+  warning: "warning",
+};
+
+export default function Alert({ type = "error", message, title }) {
   if (!message) return null;
 
-  const styles = {
-    error: "border-red-500/30 bg-red-500/10 text-red-300",
-    success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-    info: "border-violet-500/30 bg-violet-500/10 text-violet-300",
-  };
-
   return (
-    <div className={`rounded-xl border px-4 py-3 text-sm ${styles[type]}`}>
-      {message}
-    </div>
+    <OsAlert variant={VARIANT_MAP[type] || "error"}>
+      {title ? <AlertTitle>{title}</AlertTitle> : null}
+      <AlertDescription>{message}</AlertDescription>
+    </OsAlert>
   );
 }

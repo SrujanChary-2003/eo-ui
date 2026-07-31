@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Typography } from "@onesaz/ui";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import PasswordInput from "../../components/ui/PasswordInput";
 import Alert from "../../components/ui/Alert";
 import { getApiErrorMessage, getFieldErrors } from "../../utils/authErrors";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function SignInPage() {
   const { login } = useAuth();
@@ -28,6 +31,7 @@ export default function SignInPage() {
 
     try {
       await login(form);
+      toastSuccess("Signed in successfully");
       navigate("/dashboard");
     } catch (err) {
       const errorCode = err.response?.data?.errorCode;
@@ -40,7 +44,9 @@ export default function SignInPage() {
       }
 
       setFieldErrors(getFieldErrors(err));
-      setError(getApiErrorMessage(err, "Sign in failed"));
+      const msg = getApiErrorMessage(err, "Sign in failed");
+      setError(msg);
+      toastError(msg);
     } finally {
       setLoading(false);
     }
@@ -48,10 +54,18 @@ export default function SignInPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-white">Welcome back</h1>
-      <p className="mb-6 text-sm text-slate-400">Sign in to manage your events and bookings.</p>
+      <Typography variant="h4" className="mb-2 font-bold">
+        Welcome back
+      </Typography>
+      <Typography variant="body2" className="mb-6 text-muted-foreground">
+        Sign in to manage your events and bookings.
+      </Typography>
 
-      {error && <div className="mb-4"><Alert message={error} /></div>}
+      {error && (
+        <div className="mb-4">
+          <Alert message={error} />
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -64,24 +78,23 @@ export default function SignInPage() {
           error={fieldErrors.email}
           required
         />
-        <Input
-          label="Password"
-          type="password"
+        <PasswordInput
           name="password"
           value={form.password}
           onChange={handleChange}
           placeholder="••••••••"
           error={fieldErrors.password}
+          autoComplete="current-password"
           required
         />
-        <Button type="submit" className="w-full py-3" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+        <Button type="submit" fullWidth loading={loading}>
+          Sign in
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link to="/signup" className="font-medium text-violet-400 hover:text-violet-300">
+        <Link to="/signup" className="font-medium text-accent hover:underline">
           Sign up
         </Link>
       </p>

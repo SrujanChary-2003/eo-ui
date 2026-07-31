@@ -55,10 +55,8 @@ export async function updateVendorAvailability(payload) {
   return data;
 }
 
-export async function uploadPortfolio(formData) {
-  const { data } = await apiClient.post("/vendor/portfolio", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export async function uploadPortfolio(payload) {
+  const { data } = await apiClient.post("/vendor/portfolio", payload);
   return data;
 }
 

@@ -3,62 +3,62 @@ import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../hooks/useDashboard";
 import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
+import { LoadingState } from "../components/ui/LoadingState";
 import { PageHeader, StatCard } from "../components/ui/PageBits";
+import { DASHBOARD_COPY, QUICK_LINKS, STAT_CONFIG } from "../constants";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { dashboard, stats, error } = useDashboard();
+  const { dashboard, stats, loading, error } = useDashboard();
+  const role = user?.role || "customer";
+  const copy = DASHBOARD_COPY[role] || DASHBOARD_COPY.customer;
+  const statsConfig = STAT_CONFIG[role] || STAT_CONFIG.customer;
+  const quickLinks = QUICK_LINKS[role] || QUICK_LINKS.customer;
+
+  if (loading && !dashboard) {
+    return <LoadingState label="Loading dashboard..." />;
+  }
 
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
-        title={`Welcome, ${user?.firstName}!`}
-        subtitle="Plan events, pick vendors, and keep everything moving in one place."
+        title={copy.title(user?.firstName || "there")}
+        subtitle={copy.subtitle}
         actions={
-          user?.role === "customer" ? (
-            <Link to="/events/new"><Button>Create event</Button></Link>
-          ) : user?.role === "vendor" ? (
-            <Link to="/vendor/services"><Button>Add service</Button></Link>
-          ) : (
-            <Link to="/admin/events"><Button>Review events</Button></Link>
-          )
+          <Link to={copy.actionTo}>
+            <Button>{copy.actionLabel}</Button>
+          </Link>
         }
       />
 
-      {error && <div className="mb-6"><Alert message={error} /></div>}
+      {error && <Alert message={error} />}
 
-      {user?.role === "customer" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Total events" value={stats.totalEvents ?? 0} />
-          <StatCard label="Drafts" value={stats.draft ?? 0} />
-          <StatCard label="Pending approval" value={stats.pending ?? 0} />
-          <StatCard label="Approved" value={stats.approved ?? 0} />
-        </div>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statsConfig.map((item) => (
+          <StatCard
+            key={item.key}
+            label={item.label}
+            value={stats?.[item.key] ?? item.fallback}
+          />
+        ))}
+      </div>
 
-      {user?.role === "vendor" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Services" value={stats.services ?? 0} />
-          <StatCard label="Bookings" value={stats.bookings ?? 0} />
-          <StatCard label="Pending requests" value={stats.pendingRequests ?? 0} />
-          <StatCard label="Approval" value={stats.approvalStatus || "pending"} />
+      <div>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-[var(--app-muted)]">
+          Quick links
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {quickLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2.5 text-sm text-[var(--app-text-secondary)] transition hover:border-[var(--app-accent)]/40 hover:text-[var(--app-text)]"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
-      )}
-
-      {user?.role === "admin" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Users" value={stats.users ?? 0} />
-          <StatCard label="Vendors pending" value={stats.vendorsPending ?? 0} />
-          <StatCard label="Events pending" value={stats.eventsPending ?? 0} />
-          <StatCard label="Events approved" value={stats.eventsApproved ?? 0} />
-        </div>
-      )}
-
-      {dashboard?.welcomeMessage && (
-        <div className="app-card mt-8 rounded-2xl border-[var(--app-accent)]/20 p-6">
-          <p className="text-[var(--app-accent-text)]">{dashboard.welcomeMessage}</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

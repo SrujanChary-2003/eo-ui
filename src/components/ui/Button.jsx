@@ -1,18 +1,35 @@
-export default function Button({ children, variant = "primary", className = "", ...props }) {
-  const variants = {
-    primary:
-      "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25 hover:from-violet-500 hover:to-fuchsia-500",
-    secondary:
-      "border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-muted)]",
-    ghost: "text-[var(--app-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-muted)]",
-  };
+import { Button as OsButton } from "@onesaz/ui";
 
+const VARIANT_MAP = {
+  primary: "contained",
+  secondary: "outlined",
+  ghost: "ghost",
+  contained: "contained",
+  outlined: "outlined",
+  destructive: "destructive",
+  link: "link",
+};
+
+export default function Button({
+  children,
+  variant = "primary",
+  className = "",
+  loading,
+  disabled,
+  type = "button",
+  ...props
+}) {
   return (
-    <button
-      className={`inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+    <OsButton
+      type={type}
+      variant={VARIANT_MAP[variant] || "contained"}
+      color={variant === "primary" || variant === "contained" ? "accent" : "default"}
+      className={className}
+      loading={loading}
+      disabled={disabled || loading}
       {...props}
     >
       {children}
-    </button>
+    </OsButton>
   );
 }

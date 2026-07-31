@@ -12,6 +12,7 @@
       (function () {
         try {
           var mode = localStorage.getItem("eo-theme-mode") || "system";
+          var accent = localStorage.getItem("eo-accent-color") || "violet";
           var resolved =
             mode === "system"
               ? window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -19,12 +20,14 @@
                 : "light"
               : mode;
           document.documentElement.setAttribute("data-theme", resolved);
+          document.documentElement.setAttribute("data-accent", accent);
+          document.documentElement.classList.toggle("dark", resolved === "dark");
           document.documentElement.style.colorScheme = resolved;
         } catch (e) {}
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-3WAwY3g_.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CpW2Cp4l.css">
+    <script type="module" crossorigin src="/assets/index-D3tTkKYg.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B_VgKoXM.css">
   </head>
   <body>
     <div id="root"></div>

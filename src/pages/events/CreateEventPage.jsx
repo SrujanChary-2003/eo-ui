@@ -1,39 +1,63 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Badge, Chip, HStack, Typography, VStack } from "@onesaz/ui";
 import { useEvents } from "../../hooks/useEvents";
 import { useVendors } from "../../hooks/useVendors";
+import { useGlobalLoading } from "../../hooks/useGlobalLoading";
 import Alert from "../../components/ui/Alert";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import AppCombobox from "../../components/ui/AppCombobox";
+import AppTextarea from "../../components/ui/AppTextarea";
+import AppCard from "../../components/ui/AppCard";
 import { PageHeader } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 const STEPS = ["Details", "Services", "Vendors", "Review"];
 
+const VENUE_OPTIONS = [
+  { value: "home", label: "Home / Residence" },
+  { value: "hall", label: "Community / Banquet hall" },
+  { value: "outdoor", label: "Outdoor / Open ground" },
+  { value: "temple", label: "Temple / Religious venue" },
+  { value: "other", label: "Other" },
+];
+
+const EMPTY_FORM = {
+  title: "",
+  eventType: "ganesh_festival",
+  description: "",
+  eventDate: "",
+  location: "",
+  city: "",
+  guestCount: "",
+  budget: "",
+  contactPhone: "",
+  venueType: "home",
+  specialRequirements: "",
+  requiredCategories: [],
+};
+
 export default function CreateEventPage() {
   const navigate = useNavigate();
-  const { catalog, loadCatalog, create, update, selectVendors } = useEvents(false);
+  const { catalog, loadCatalog, create, update, selectVendors, resetCurrent } = useEvents(false);
   const { vendors, load } = useVendors(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Saving event...");
+  /** Single draft id for this wizard — never create more than one record. */
   const [eventId, setEventId] = useState(null);
-  const [form, setForm] = useState({
-    title: "",
-    eventType: "ganesh_festival",
-    description: "",
-    eventDate: "",
-    location: "",
-    city: "",
-    guestCount: "",
-    budget: "",
-    requiredCategories: [],
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [selectedServices, setSelectedServices] = useState([]);
 
+  useGlobalLoading(saving, loadingMessage);
+
   useEffect(() => {
+    resetCurrent();
     loadCatalog();
-  }, [loadCatalog]);
+  }, [loadCatalog, resetCurrent]);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -41,12 +65,47 @@ export default function CreateEventPage() {
     load(category ? { category } : {}).catch(() => {});
   }, [step, form.requiredCategories, load]);
 
+  const eventTypeOptions = useMemo(
+    () => (catalog.eventTypes || []).map((t) => ({ value: t.value, label: t.label })),
+    [catalog.eventTypes]
+  );
+
   const filteredVendors = useMemo(() => {
     if (!form.requiredCategories.length) return vendors;
     return vendors.filter((v) =>
       (v.services || []).some((s) => form.requiredCategories.includes(s.category))
     );
   }, [vendors, form.requiredCategories]);
+
+  const detailsPayload = () => ({
+    title: form.title.trim(),
+    eventType: form.eventType,
+    description: form.description,
+    eventDate: form.eventDate,
+    location: form.location.trim(),
+    city: form.city,
+    guestCount: Number(form.guestCount) || 0,
+    budget: Number(form.budget) || 0,
+    contactPhone: form.contactPhone,
+    venueType: form.venueType,
+    specialRequirements: form.specialRequirements,
+    requiredCategories: form.requiredCategories,
+  });
+
+  /** Create once on first save; every later stage PATCHes the same draft. */
+  const persistDraft = async (extra = {}) => {
+    const payload = { ...detailsPayload(), ...extra };
+    if (eventId) {
+      return update(eventId, payload);
+    }
+    const event = await create(payload);
+    const id = event?.id || event?._id;
+    if (!id) {
+      throw new Error("Event was created but no id was returned");
+    }
+    setEventId(String(id));
+    return event;
+  };
 
   const toggleCategory = (value) => {
     setForm((prev) => {
@@ -78,74 +137,124 @@ export default function CreateEventPage() {
 
   const saveDetails = async () => {
     setError("");
-    setLoading(true);
+    setLoadingMessage("Saving event details...");
+    setSaving(true);
     try {
-      const payload = {
-        ...form,
-        guestCount: Number(form.guestCount) || 0,
-        budget: Number(form.budget) || 0,
-      };
-      if (eventId) {
-        await update(eventId, payload);
-      } else {
-        const event = await create(payload);
-        setEventId(event.id);
-      }
+      await persistDraft();
+      toastSuccess("Details saved");
       setStep(1);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Could not save event"));
+      const msg = getApiErrorMessage(err, "Could not save event");
+      setError(msg);
+      toastError(msg);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const saveCategories = async () => {
     if (!form.requiredCategories.length) {
-      setError("Pick at least one service you need");
+      const msg = "Pick at least one service you need";
+      setError(msg);
+      toastError(msg);
+      return;
+    }
+    if (!eventId) {
+      const msg = "Save event details first";
+      setError(msg);
+      toastError(msg);
+      setStep(0);
       return;
     }
     setError("");
-    setLoading(true);
+    setLoadingMessage("Saving required services...");
+    setSaving(true);
     try {
       await update(eventId, { requiredCategories: form.requiredCategories });
+      toastSuccess("Services saved");
       setStep(2);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Could not save services"));
+      const msg = getApiErrorMessage(err, "Could not save services");
+      setError(msg);
+      toastError(msg);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const saveVendors = async () => {
     if (!selectedServices.length) {
-      setError("Select at least one vendor service");
+      const msg = "Select at least one vendor service";
+      setError(msg);
+      toastError(msg);
+      return;
+    }
+    if (!eventId) {
+      const msg = "Save event details first";
+      setError(msg);
+      toastError(msg);
+      setStep(0);
       return;
     }
     setError("");
-    setLoading(true);
+    setLoadingMessage("Saving vendor selections...");
+    setSaving(true);
     try {
       await selectVendors(
         eventId,
         selectedServices.map((s) => ({ serviceId: s.serviceId }))
       );
+      toastSuccess("Vendors saved");
       setStep(3);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Could not save vendors"));
+      const msg = getApiErrorMessage(err, "Could not save vendors");
+      setError(msg);
+      toastError(msg);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const submitEvent = async () => {
+    if (!eventId) {
+      const msg = "Complete previous steps first";
+      setError(msg);
+      toastError(msg);
+      return;
+    }
     setError("");
-    setLoading(true);
+    setLoadingMessage("Submitting event for approval...");
+    setSaving(true);
     try {
       await update(eventId, { submit: true });
+      toastSuccess("Event submitted for approval");
       navigate(`/events/${eventId}`);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Could not submit event"));
+      const msg = getApiErrorMessage(err, "Could not submit event");
+      setError(msg);
+      toastError(msg);
     } finally {
-      setLoading(false);
+      setSaving(false);
+    }
+  };
+
+  const saveDraftAndExit = async () => {
+    if (!eventId) {
+      navigate("/events");
+      return;
+    }
+    setLoadingMessage("Saving draft...");
+    setSaving(true);
+    try {
+      await persistDraft();
+      toastSuccess("Draft saved");
+      navigate(`/events/${eventId}`);
+    } catch (err) {
+      const msg = getApiErrorMessage(err, "Could not save draft");
+      setError(msg);
+      toastError(msg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -153,85 +262,149 @@ export default function CreateEventPage() {
     <div>
       <PageHeader
         title="Create event"
-        subtitle="Tell us what you're planning, pick the services you need, then choose vendors."
+        subtitle="Complete each step — your draft is saved once, then updated as you continue."
+        actions={
+          <Button variant="secondary" onClick={saveDraftAndExit} disabled={saving}>
+            Save draft & exit
+          </Button>
+        }
       />
 
-      <div className="mb-8 flex flex-wrap gap-2">
+      <HStack className="mb-8 flex-wrap gap-2">
         {STEPS.map((label, idx) => (
-          <span
+          <Badge
             key={label}
-            className={`rounded-full px-3 py-1 text-xs ${
-              idx === step ? "bg-violet-500/30 text-violet-200" : "bg-white/5 text-slate-400"
-            }`}
+            color={idx === step ? "default" : "normal"}
+            variant={idx === step ? "contained" : "soft"}
           >
             {idx + 1}. {label}
-          </span>
+          </Badge>
         ))}
-      </div>
+      </HStack>
 
-      {error && <div className="mb-4"><Alert message={error} /></div>}
-
-      {step === 0 && (
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/50 p-6">
-          <Input label="Event title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ganesh Festival at Home" required />
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">Event type</label>
-            <select
-              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 text-sm text-white"
-              value={form.eventType}
-              onChange={(e) => setForm({ ...form, eventType: e.target.value })}
-            >
-              {(catalog.eventTypes || []).map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-          <Input label="Date & time" type="datetime-local" value={form.eventDate} onChange={(e) => setForm({ ...form, eventDate: e.target.value })} required />
-          <Input label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Venue / address" required />
-          <Input label="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Guest count" type="number" value={form.guestCount} onChange={(e) => setForm({ ...form, guestCount: e.target.value })} />
-            <Input label="Budget" type="number" value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">Description</label>
-            <textarea
-              className="min-h-24 w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 text-sm text-white"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-          </div>
-          <Button onClick={saveDetails} disabled={loading || !form.title || !form.eventDate || !form.location}>
-            {loading ? "Saving..." : "Continue"}
-          </Button>
+      {error && (
+        <div className="mb-4">
+          <Alert message={error} />
         </div>
       )}
 
+      {step === 0 && (
+        <AppCard>
+          <VStack spacing={4} className="gap-4">
+            <Input
+              label="Event title"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="Ganesh Festival at Home"
+              required
+            />
+            <AppCombobox
+              label="Event type"
+              options={eventTypeOptions}
+              value={form.eventType}
+              onChange={(value) => setForm({ ...form, eventType: value || "ganesh_festival" })}
+              required
+            />
+            <AppCombobox
+              label="Venue type"
+              options={VENUE_OPTIONS}
+              value={form.venueType}
+              onChange={(value) => setForm({ ...form, venueType: value || "home" })}
+            />
+            <Input
+              label="Date & time"
+              type="datetime-local"
+              value={form.eventDate}
+              onChange={(e) => setForm({ ...form, eventDate: e.target.value })}
+              required
+            />
+            <Input
+              label="Location"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              placeholder="Venue / address"
+              required
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="City"
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              />
+              <Input
+                label="Contact phone"
+                value={form.contactPhone}
+                onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+                placeholder="+91 ..."
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Guest count"
+                type="number"
+                value={form.guestCount}
+                onChange={(e) => setForm({ ...form, guestCount: e.target.value })}
+              />
+              <Input
+                label="Budget"
+                type="number"
+                value={form.budget}
+                onChange={(e) => setForm({ ...form, budget: e.target.value })}
+              />
+            </div>
+            <AppTextarea
+              label="Description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={4}
+            />
+            <AppTextarea
+              label="Special requirements"
+              value={form.specialRequirements}
+              onChange={(e) => setForm({ ...form, specialRequirements: e.target.value })}
+              placeholder="Parking, power backup, decoration notes..."
+              rows={3}
+            />
+            <Button
+              onClick={saveDetails}
+              loading={saving}
+              disabled={!form.title || !form.eventDate || !form.location}
+            >
+              Save & continue
+            </Button>
+          </VStack>
+        </AppCard>
+      )}
+
       {step === 1 && (
-        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-6">
-          <p className="mb-4 text-sm text-slate-400">What do you need for this event?</p>
+        <AppCard>
+          <Typography variant="body2" className="mb-4 text-muted-foreground">
+            What do you need for this event?
+          </Typography>
           <div className="grid gap-3 sm:grid-cols-2">
             {(catalog.serviceCategories || []).map((cat) => {
               const active = form.requiredCategories.includes(cat.value);
               return (
-                <button
+                <Chip
                   key={cat.value}
-                  type="button"
+                  label={cat.label}
+                  variant={active ? "contained" : "outlined"}
+                  color={active ? "default" : "default"}
                   onClick={() => toggleCategory(cat.value)}
-                  className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
-                    active ? "border-violet-500 bg-violet-500/20 text-violet-100" : "border-white/10 text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  {cat.label}
-                </button>
+                  className="cursor-pointer justify-start px-4 py-3"
+                />
               );
             })}
           </div>
           <div className="mt-6 flex gap-3">
-            <Button variant="secondary" onClick={() => setStep(0)}>Back</Button>
-            <Button onClick={saveCategories} disabled={loading}>Continue</Button>
+            <Button variant="secondary" onClick={() => setStep(0)} disabled={saving}>
+              Back
+            </Button>
+            <Button onClick={saveCategories} loading={saving}>
+              Save & continue
+            </Button>
           </div>
-        </div>
+        </AppCard>
       )}
 
       {step === 2 && (
@@ -240,9 +413,11 @@ export default function CreateEventPage() {
             <Alert message="No approved vendors match yet. Ask vendors to list services, or continue after admin approves vendors." />
           )}
           {filteredVendors.map((vendor) => (
-            <div key={vendor.id} className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
-              <h3 className="font-semibold text-white">{vendor.businessName}</h3>
-              <p className="text-sm text-slate-400">{vendor.city || "—"} · {vendor.description || "No description"}</p>
+            <AppCard key={vendor.id} contentClassName="p-5">
+              <Typography variant="h6">{vendor.businessName}</Typography>
+              <Typography variant="body2" className="text-muted-foreground">
+                {vendor.city || "—"} · {vendor.description || "No description"}
+              </Typography>
               <div className="mt-4 space-y-2">
                 {(vendor.services || [])
                   .filter((s) => form.requiredCategories.includes(s.category))
@@ -253,49 +428,68 @@ export default function CreateEventPage() {
                         key={service.id}
                         type="button"
                         onClick={() => toggleService({ ...service, _vendorName: vendor.businessName })}
-                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm ${
-                          selected ? "border-violet-500 bg-violet-500/15" : "border-white/10 hover:bg-white/5"
+                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                          selected
+                            ? "border-accent bg-accent/10"
+                            : "border-border hover:bg-muted/40"
                         }`}
                       >
                         <span>
-                          <span className="font-medium text-white">{service.title}</span>
-                          <span className="ml-2 capitalize text-slate-400">{service.category.replaceAll("_", " ")}</span>
+                          <span className="font-medium text-foreground">{service.title}</span>
+                          <span className="ml-2 capitalize text-muted-foreground">
+                            {service.category.replaceAll("_", " ")}
+                          </span>
                         </span>
-                        <span className="text-slate-300">₹{service.priceFrom}–₹{service.priceTo}</span>
+                        <span className="text-muted-foreground">
+                          ₹{service.priceFrom}–₹{service.priceTo}
+                        </span>
                       </button>
                     );
                   })}
               </div>
-            </div>
+            </AppCard>
           ))}
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
-            <Button onClick={saveVendors} disabled={loading}>Continue</Button>
+            <Button variant="secondary" onClick={() => setStep(1)} disabled={saving}>
+              Back
+            </Button>
+            <Button onClick={saveVendors} loading={saving}>
+              Save & continue
+            </Button>
           </div>
         </div>
       )}
 
       {step === 3 && (
-        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-6">
-          <h3 className="text-lg font-semibold text-white">{form.title}</h3>
-          <p className="mt-1 text-sm capitalize text-slate-400">
-            {form.eventType.replaceAll("_", " ")} · {form.location}
-          </p>
+        <AppCard>
+          <Typography variant="h5">{form.title}</Typography>
+          <Typography variant="body2" className="mt-1 capitalize text-muted-foreground">
+            {form.eventType.replaceAll("_", " ")} · {form.venueType} · {form.location}
+          </Typography>
           <div className="mt-4">
-            <p className="text-sm text-slate-400">Selected services</p>
-            <ul className="mt-2 space-y-1 text-sm text-slate-200">
+            <Typography variant="body2" className="text-muted-foreground">
+              Selected services
+            </Typography>
+            <ul className="mt-2 space-y-1 text-sm text-foreground">
               {selectedServices.map((s) => (
-                <li key={s.serviceId}>{s.title} · {s.vendorName}</li>
+                <li key={s.serviceId}>
+                  {s.title} · {s.vendorName}
+                </li>
               ))}
             </ul>
           </div>
-          <div className="mt-6 flex gap-3">
-            <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
-            <Button onClick={submitEvent} disabled={loading}>
-              {loading ? "Submitting..." : "Submit for approval"}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button variant="secondary" onClick={() => setStep(2)} disabled={saving}>
+              Back
+            </Button>
+            <Button variant="secondary" onClick={saveDraftAndExit} loading={saving}>
+              Keep as draft
+            </Button>
+            <Button onClick={submitEvent} loading={saving}>
+              Submit for approval
             </Button>
           </div>
-        </div>
+        </AppCard>
       )}
     </div>
   );

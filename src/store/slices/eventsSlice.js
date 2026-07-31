@@ -77,6 +77,7 @@ const eventsSlice = createSlice({
     current: null,
     catalog: { eventTypes: [], serviceCategories: [] },
     loading: false,
+    detailLoading: false,
     error: null,
   },
   reducers: {
@@ -85,6 +86,8 @@ const eventsSlice = createSlice({
     },
     clearCurrentEvent(state) {
       state.current = null;
+      state.error = null;
+      state.detailLoading = false;
     },
   },
   extraReducers: (builder) => {
@@ -104,12 +107,23 @@ const eventsSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message || "Failed to load events";
       })
+      .addCase(fetchEventById.pending, (state) => {
+        state.detailLoading = true;
+        state.error = null;
+        state.current = null;
+      })
       .addCase(fetchEventById.fulfilled, (state, action) => {
+        state.detailLoading = false;
         state.current = action.payload;
+      })
+      .addCase(fetchEventById.rejected, (state, action) => {
+        state.detailLoading = false;
+        state.current = null;
+        state.error = action.payload?.message || "Failed to load event";
       })
       .addCase(createEvent.fulfilled, (state, action) => {
         state.current = action.payload;
-        state.list = [action.payload, ...state.list];
+        state.list = [action.payload, ...state.list.filter((e) => e.id !== action.payload.id)];
       })
       .addCase(updateEvent.fulfilled, (state, action) => {
         state.current = action.payload;
@@ -117,6 +131,7 @@ const eventsSlice = createSlice({
       })
       .addCase(selectEventVendors.fulfilled, (state, action) => {
         state.current = action.payload;
+        state.list = state.list.map((e) => (e.id === action.payload.id ? action.payload : e));
       })
       .addCase(removeEvent.fulfilled, (state, action) => {
         state.list = state.list.filter((e) => e.id !== action.payload);

@@ -35,6 +35,15 @@ export async function getCroppedImageBlob(imageSrc, cropPixels, mimeType = "imag
   });
 }
 
+export function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(blob);
+  });
+}
+
 function createImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -58,7 +67,7 @@ export function useImageCrop() {
   }, [sourceUrl]);
 
   const onFileSelect = useCallback((file) => {
-    if (!file) return;
+    if (!file || !file.type?.startsWith("image/")) return;
     const url = URL.createObjectURL(file);
     setSourceUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
@@ -89,6 +98,11 @@ export function useImageCrop() {
     return getCroppedImageBlob(sourceUrl, croppedAreaPixels);
   }, [sourceUrl, croppedAreaPixels]);
 
+  const getCroppedDataUrl = useCallback(async () => {
+    const blob = await getCroppedBlob();
+    return blobToDataUrl(blob);
+  }, [getCroppedBlob]);
+
   return {
     sourceUrl,
     crop,
@@ -99,6 +113,7 @@ export function useImageCrop() {
     onFileSelect,
     onCropComplete,
     getCroppedBlob,
+    getCroppedDataUrl,
     reset,
   };
 }

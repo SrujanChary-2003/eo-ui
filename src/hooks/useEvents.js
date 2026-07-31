@@ -3,11 +3,13 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   selectCurrentEvent,
   selectEventCatalog,
+  selectEventDetailLoading,
   selectEvents,
   selectEventsError,
   selectEventsLoading,
 } from "../store/selectors";
 import {
+  clearCurrentEvent,
   createEvent,
   fetchCatalog,
   fetchEventById,
@@ -23,11 +25,13 @@ export function useEvents(autoLoad = true) {
   const current = useAppSelector(selectCurrentEvent);
   const catalog = useAppSelector(selectEventCatalog);
   const loading = useAppSelector(selectEventsLoading);
+  const detailLoading = useAppSelector(selectEventDetailLoading);
   const error = useAppSelector(selectEventsError);
 
   const loadEvents = useCallback((params) => dispatch(fetchEvents(params)), [dispatch]);
   const loadCatalog = useCallback(() => dispatch(fetchCatalog()), [dispatch]);
   const loadEvent = useCallback((id) => dispatch(fetchEventById(id)), [dispatch]);
+  const resetCurrent = useCallback(() => dispatch(clearCurrentEvent()), [dispatch]);
 
   useEffect(() => {
     if (autoLoad) loadEvents();
@@ -90,10 +94,12 @@ export function useEvents(autoLoad = true) {
     current,
     catalog,
     loading,
+    detailLoading,
     error,
     loadEvents,
     loadCatalog,
     loadEvent,
+    resetCurrent,
     create,
     update,
     selectVendors,

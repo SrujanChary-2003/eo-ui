@@ -5,6 +5,7 @@ import eventsReducer from "./slices/eventsSlice";
 import vendorsReducer from "./slices/vendorsSlice";
 import vendorWorkspaceReducer from "./slices/vendorWorkspaceSlice";
 import adminReducer from "./slices/adminSlice";
+import uiReducer from "./slices/uiSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,13 +15,8 @@ export const store = configureStore({
     vendors: vendorsReducer,
     vendorWorkspace: vendorWorkspaceReducer,
     admin: adminReducer,
+    ui: uiReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ["vendorWorkspace/uploadProof/fulfilled"],
-      },
-    }),
 });
 
 export default store;

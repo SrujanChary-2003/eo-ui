@@ -1,5 +1,14 @@
 export function getApiErrorMessage(err, fallback = "Something went wrong") {
   const data = err?.response?.data;
+  if (data?.errorCode === "ACCOUNT_LOCKED") {
+    const retryAfter = Number(data?.data?.retryAfterSeconds);
+    if (Number.isFinite(retryAfter) && retryAfter > 0) {
+      const minutes = Math.max(1, Math.ceil(retryAfter / 60));
+      const when = minutes === 1 ? "1 minute" : `${minutes} minutes`;
+      return `Too many login attempts. Please try again after ${when}.`;
+    }
+    return data?.message || "Too many login attempts. Please try again after 5 minutes.";
+  }
   if (data?.errors?.length) {
     return data.errors.map((e) => e.message).filter(Boolean).join(". ");
   }

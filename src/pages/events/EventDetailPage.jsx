@@ -1,44 +1,69 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Typography } from "@onesaz/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { useEvents } from "../../hooks/useEvents";
+import { useGlobalLoading } from "../../hooks/useGlobalLoading";
 import Alert from "../../components/ui/Alert";
+import AppCard from "../../components/ui/AppCard";
 import Button from "../../components/ui/Button";
+import { LoadingState } from "../../components/ui/LoadingState";
 import { PageHeader, StatusBadge } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 export default function EventDetailPage() {
   const { eventId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { current: event, loadEvent, update, remove } = useEvents(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const { current: event, detailLoading, error, loadEvent, update, remove } = useEvents(false);
+  const [actionError, setActionError] = useState("");
+  const [acting, setActing] = useState(false);
+
+  useGlobalLoading(detailLoading || acting, detailLoading ? "Loading event..." : "Updating event...");
 
   useEffect(() => {
-    loadEvent(eventId);
+    if (eventId) loadEvent(eventId);
   }, [eventId, loadEvent]);
 
   const submit = async () => {
+    setActionError("");
+    setActing(true);
     try {
       await update(eventId, { submit: true });
-      setMessage("Submitted for admin approval");
+      toastSuccess("Submitted for admin approval");
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      const msg = getApiErrorMessage(err);
+      setActionError(msg);
+      toastError(msg);
+    } finally {
+      setActing(false);
     }
   };
 
   const onDelete = async () => {
+    setActionError("");
+    setActing(true);
     try {
       await remove(eventId);
+      toastSuccess("Event deleted");
       navigate("/events");
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      const msg = getApiErrorMessage(err);
+      setActionError(msg);
+      toastError(msg);
+    } finally {
+      setActing(false);
     }
   };
 
-  if (!event && !error) return <p className="text-slate-400">Loading...</p>;
-  if (!event) return <Alert message={error || "Event not found"} />;
+  if (detailLoading) {
+    return <LoadingState label="Loading event..." />;
+  }
+
+  if (!event) {
+    return <Alert message={actionError || error || "Event not found"} />;
+  }
 
   return (
     <div>
@@ -48,47 +73,78 @@ export default function EventDetailPage() {
         actions={<StatusBadge status={event.status} />}
       />
 
-      {error && <div className="mb-4"><Alert message={error} /></div>}
-      {message && <div className="mb-4"><Alert type="success" message={message} /></div>}
+      {(actionError || error) && (
+        <div className="mb-4">
+          <Alert message={actionError || error} />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/50 p-6 lg:col-span-2">
-          <p className="text-slate-300">{event.description || "No description"}</p>
+        <AppCard className="lg:col-span-2" contentClassName="space-y-4 p-6">
+          <Typography variant="body1" className="text-muted-foreground">
+            {event.description || "No description"}
+          </Typography>
           <div className="grid gap-3 text-sm sm:grid-cols-2">
-            <div><p className="text-slate-500">Date</p><p>{new Date(event.eventDate).toLocaleString()}</p></div>
-            <div><p className="text-slate-500">City</p><p>{event.city || "—"}</p></div>
-            <div><p className="text-slate-500">Guests</p><p>{event.guestCount || 0}</p></div>
-            <div><p className="text-slate-500">Budget</p><p>₹{event.budget || 0}</p></div>
+            <div>
+              <p className="text-muted-foreground">Date</p>
+              <p className="text-foreground">{new Date(event.eventDate).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">City</p>
+              <p className="text-foreground">{event.city || "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Guests</p>
+              <p className="text-foreground">{event.guestCount || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Budget</p>
+              <p className="text-foreground">₹{event.budget || 0}</p>
+            </div>
           </div>
           {event.adminNote && (
-            <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200">Admin note: {event.adminNote}</p>
+            <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-200">
+              Admin note: {event.adminNote}
+            </p>
           )}
-        </div>
+        </AppCard>
 
-        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-6">
-          <h3 className="font-semibold text-white">Selected vendors</h3>
+        <AppCard contentClassName="p-6">
+          <Typography variant="h6">Selected vendors</Typography>
           <ul className="mt-3 space-y-3">
             {(event.selectedVendors || []).map((sv) => (
-              <li key={sv._id || sv.service} className="rounded-xl border border-white/5 p-3 text-sm">
-                <p className="capitalize text-slate-200">{sv.category?.replaceAll("_", " ")}</p>
+              <li key={sv._id || sv.service} className="rounded-xl border border-border p-3 text-sm">
+                <Typography variant="body2" className="capitalize text-foreground">
+                  {sv.category?.replaceAll("_", " ")}
+                </Typography>
                 <StatusBadge status={sv.status} />
               </li>
             ))}
-            {!event.selectedVendors?.length && <p className="text-sm text-slate-500">None selected</p>}
+            {!event.selectedVendors?.length && (
+              <p className="text-sm text-muted-foreground">None selected</p>
+            )}
           </ul>
 
           {user?.role === "customer" && (
             <div className="mt-6 space-y-2">
               {["draft", "rejected"].includes(event.status) && (
                 <>
-                  <Button className="w-full" onClick={submit}>Submit for approval</Button>
-                  <Button variant="ghost" className="w-full" onClick={onDelete}>Delete</Button>
+                  <Button className="w-full" onClick={submit} loading={acting}>
+                    Submit for approval
+                  </Button>
+                  <Button variant="ghost" className="w-full" onClick={onDelete} disabled={acting}>
+                    Delete
+                  </Button>
                 </>
               )}
-              <Link to="/events"><Button variant="secondary" className="w-full">Back to events</Button></Link>
+              <Link to="/events">
+                <Button variant="secondary" className="w-full">
+                  Back to events
+                </Button>
+              </Link>
             </div>
           )}
-        </div>
+        </AppCard>
       </div>
     </div>
   );

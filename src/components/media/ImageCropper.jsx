@@ -1,4 +1,5 @@
 import Cropper from "react-easy-crop";
+import { Typography } from "@onesaz/ui";
 import Button from "../ui/Button";
 
 export default function ImageCropper({
@@ -18,9 +19,11 @@ export default function ImageCropper({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-900 p-4 shadow-2xl">
-        <h3 className="mb-3 text-lg font-semibold text-white">{title}</h3>
-        <div className="relative h-72 overflow-hidden rounded-xl bg-slate-950 sm:h-96">
+      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-2xl">
+        <Typography variant="h6" className="mb-3">
+          {title}
+        </Typography>
+        <div className="relative h-72 overflow-hidden rounded-xl bg-muted sm:h-96">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -32,7 +35,7 @@ export default function ImageCropper({
           />
         </div>
         <div className="mt-4">
-          <label className="mb-1 block text-xs text-slate-400">Zoom</label>
+          <label className="mb-1 block text-xs text-muted-foreground">Zoom</label>
           <input
             type="range"
             min={1}

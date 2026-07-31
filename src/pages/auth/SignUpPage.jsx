@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Typography } from "@onesaz/ui";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import PasswordInput from "../../components/ui/PasswordInput";
 import Alert from "../../components/ui/Alert";
+import AppCombobox from "../../components/ui/AppCombobox";
 import {
   getApiErrorMessage,
   getFieldErrors,
@@ -12,6 +15,11 @@ import {
 
 const PASSWORD_HINT =
   "Min 8 chars with uppercase, lowercase, number, and special character.";
+
+const ROLE_OPTIONS = [
+  { value: "customer", label: "Customer (planning events)" },
+  { value: "vendor", label: "Vendor (offering services)" },
+];
 
 export default function SignUpPage() {
   const { register } = useAuth();
@@ -61,10 +69,18 @@ export default function SignUpPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-white">Create your account</h1>
-      <p className="mb-6 text-sm text-slate-400">Join EventSphere and start planning events today.</p>
+      <Typography variant="h4" className="mb-2 font-bold">
+        Create your account
+      </Typography>
+      <Typography variant="body2" className="mb-6 text-muted-foreground">
+        Join EventSphere and start planning events today.
+      </Typography>
 
-      {error && <div className="mb-4"><Alert message={error} /></div>}
+      {error && (
+        <div className="mb-4">
+          <Alert message={error} />
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -97,40 +113,34 @@ export default function SignUpPage() {
           error={fieldErrors.email}
           required
         />
-        <Input
-          label="Password"
-          type="password"
+        <PasswordInput
           name="password"
           value={form.password}
           onChange={handleChange}
           placeholder="••••••••"
           error={fieldErrors.password}
+          autoComplete="new-password"
           minLength={8}
           required
         />
-        <p className="text-xs text-slate-500">{PASSWORD_HINT}</p>
+        <p className="text-xs text-muted-foreground">{PASSWORD_HINT}</p>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300">I am a</label>
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500"
-          >
-            <option value="customer">Customer (planning events)</option>
-            <option value="vendor">Vendor (offering services)</option>
-          </select>
-        </div>
+        <AppCombobox
+          label="I am a"
+          options={ROLE_OPTIONS}
+          value={form.role}
+          onChange={(value) => setForm((prev) => ({ ...prev, role: value || "customer" }))}
+          required
+        />
 
-        <Button type="submit" className="w-full py-3" disabled={loading}>
-          {loading ? "Creating account..." : "Create account"}
+        <Button type="submit" fullWidth loading={loading}>
+          Create account
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link to="/signin" className="font-medium text-violet-400 hover:text-violet-300">
+        <Link to="/signin" className="font-medium text-accent hover:underline">
           Sign in
         </Link>
       </p>

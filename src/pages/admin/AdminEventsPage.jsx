@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { Typography } from "@onesaz/ui";
 import { useAdmin } from "../../hooks/useAdmin";
 import Alert from "../../components/ui/Alert";
+import AppCard from "../../components/ui/AppCard";
 import Button from "../../components/ui/Button";
 import { EmptyState, PageHeader, StatusBadge } from "../../components/ui/PageBits";
 
@@ -20,7 +22,7 @@ export default function AdminEventsPage() {
             key={value || "all"}
             type="button"
             onClick={() => loadEvents(value ? { status: value } : {})}
-            className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-violet-500/20"
+            className="rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/20 hover:text-foreground"
           >
             {value ? value.replaceAll("_", " ") : "all"}
           </button>
@@ -30,13 +32,13 @@ export default function AdminEventsPage() {
       {!events.length && <EmptyState title="Nothing here">No events match this filter.</EmptyState>}
       <div className="space-y-3">
         {events.map((event) => (
-          <div key={event.id} className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
+          <AppCard key={event.id} contentClassName="p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">{event.title}</h2>
-                <p className="text-sm capitalize text-slate-400">
+                <Typography variant="h6">{event.title}</Typography>
+                <Typography variant="body2" className="capitalize text-muted-foreground">
                   {String(event.eventType || "").replaceAll("_", " ")} · {event.location}
-                </p>
+                </Typography>
               </div>
               <StatusBadge status={event.status} />
             </div>
@@ -46,7 +48,7 @@ export default function AdminEventsPage() {
                 <Button variant="secondary" onClick={() => reviewEvent(event.id, false, "Needs changes")}>Reject</Button>
               </div>
             )}
-          </div>
+          </AppCard>
         ))}
       </div>
     </div>
