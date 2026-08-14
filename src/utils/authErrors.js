@@ -9,8 +9,8 @@ export function getApiErrorMessage(err, fallback = "Something went wrong") {
     }
     return data?.message || "Too many login attempts. Please try again after 5 minutes.";
   }
-  if (data?.errors?.length) {
-    return data.errors.map((e) => e.message).filter(Boolean).join(". ");
+  if (Array.isArray(data?.errors) && data.errors.length) {
+    return data.errors.map((e) => e?.message).filter(Boolean).join(". ");
   }
   return data?.message || err?.message || fallback;
 }

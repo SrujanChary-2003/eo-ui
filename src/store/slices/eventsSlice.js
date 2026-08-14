@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import * as eventsApi from "../../apis/events/events.api";
+import { emptyPagination, readPagination } from "../../utils/pagination";
 
 export const fetchCatalog = createAsyncThunk("events/catalog", async (_, { rejectWithValue }) => {
   try {
@@ -13,7 +14,10 @@ export const fetchCatalog = createAsyncThunk("events/catalog", async (_, { rejec
 export const fetchEvents = createAsyncThunk("events/list", async (params = {}, { rejectWithValue }) => {
   try {
     const response = await eventsApi.getEvents(params);
-    return response.data.events || [];
+    return {
+      events: response.data?.events || [],
+      pagination: readPagination(response.data),
+    };
   } catch (err) {
     return rejectWithValue(err.response?.data || { message: "Failed to load events" });
   }
@@ -22,7 +26,7 @@ export const fetchEvents = createAsyncThunk("events/list", async (params = {}, {
 export const fetchEventById = createAsyncThunk("events/detail", async (eventId, { rejectWithValue }) => {
   try {
     const response = await eventsApi.getEventById(eventId);
-    return response.data.event;
+    return response.data?.event;
   } catch (err) {
     return rejectWithValue(err.response?.data || { message: "Failed to load event" });
   }
@@ -31,7 +35,7 @@ export const fetchEventById = createAsyncThunk("events/detail", async (eventId, 
 export const createEvent = createAsyncThunk("events/create", async (payload, { rejectWithValue }) => {
   try {
     const response = await eventsApi.createEvent(payload);
-    return response.data.event;
+    return response.data?.event;
   } catch (err) {
     return rejectWithValue(err.response?.data || { message: "Failed to create event" });
   }
@@ -42,7 +46,7 @@ export const updateEvent = createAsyncThunk(
   async ({ eventId, payload }, { rejectWithValue }) => {
     try {
       const response = await eventsApi.updateEvent(eventId, payload);
-      return response.data.event;
+      return response.data?.event;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Failed to update event" });
     }
@@ -54,7 +58,7 @@ export const selectEventVendors = createAsyncThunk(
   async ({ eventId, selections }, { rejectWithValue }) => {
     try {
       const response = await eventsApi.selectEventVendors(eventId, selections);
-      return response.data.event;
+      return response.data?.event;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Failed to select vendors" });
     }
@@ -74,6 +78,7 @@ const eventsSlice = createSlice({
   name: "events",
   initialState: {
     list: [],
+    pagination: emptyPagination,
     current: null,
     catalog: { eventTypes: [], serviceCategories: [] },
     loading: false,
@@ -101,7 +106,8 @@ const eventsSlice = createSlice({
       })
       .addCase(fetchEvents.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = Array.isArray(action.payload?.events) ? action.payload.events : [];
+        state.pagination = action.payload?.pagination || emptyPagination;
       })
       .addCase(fetchEvents.rejected, (state, action) => {
         state.loading = false;
@@ -114,7 +120,7 @@ const eventsSlice = createSlice({
       })
       .addCase(fetchEventById.fulfilled, (state, action) => {
         state.detailLoading = false;
-        state.current = action.payload;
+        state.current = action.payload || null;
       })
       .addCase(fetchEventById.rejected, (state, action) => {
         state.detailLoading = false;
@@ -122,19 +128,22 @@ const eventsSlice = createSlice({
         state.error = action.payload?.message || "Failed to load event";
       })
       .addCase(createEvent.fulfilled, (state, action) => {
+        if (!action.payload) return;
         state.current = action.payload;
-        state.list = [action.payload, ...state.list.filter((e) => e.id !== action.payload.id)];
+        state.list = [action.payload, ...state.list.filter((e) => e?.id !== action.payload.id)];
       })
       .addCase(updateEvent.fulfilled, (state, action) => {
+        if (!action.payload) return;
         state.current = action.payload;
-        state.list = state.list.map((e) => (e.id === action.payload.id ? action.payload : e));
+        state.list = state.list.map((e) => (e?.id === action.payload.id ? action.payload : e));
       })
       .addCase(selectEventVendors.fulfilled, (state, action) => {
+        if (!action.payload) return;
         state.current = action.payload;
-        state.list = state.list.map((e) => (e.id === action.payload.id ? action.payload : e));
+        state.list = state.list.map((e) => (e?.id === action.payload.id ? action.payload : e));
       })
       .addCase(removeEvent.fulfilled, (state, action) => {
-        state.list = state.list.filter((e) => e.id !== action.payload);
+        state.list = state.list.filter((e) => e?.id !== action.payload);
         state.current = null;
       });
   },

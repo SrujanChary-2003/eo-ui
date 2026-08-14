@@ -2,8 +2,10 @@ import { useCallback, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   selectVendorBookings,
+  selectVendorBookingsPagination,
   selectVendorProfile,
   selectVendorServices,
+  selectVendorServicesPagination,
   selectVendorWorkspaceError,
   selectVendorWorkspaceMessage,
 } from "../store/selectors";
@@ -27,12 +29,14 @@ export function useVendorWorkspace() {
   const profile = useAppSelector(selectVendorProfile);
   const services = useAppSelector(selectVendorServices);
   const bookings = useAppSelector(selectVendorBookings);
+  const servicesPagination = useAppSelector(selectVendorServicesPagination);
+  const bookingsPagination = useAppSelector(selectVendorBookingsPagination);
   const message = useAppSelector(selectVendorWorkspaceMessage);
   const error = useAppSelector(selectVendorWorkspaceError);
 
   const loadProfile = useCallback(() => dispatch(fetchVendorProfile()), [dispatch]);
-  const loadServices = useCallback(() => dispatch(fetchVendorServices()), [dispatch]);
-  const loadBookings = useCallback(() => dispatch(fetchVendorBookings()), [dispatch]);
+  const loadServices = useCallback((params) => dispatch(fetchVendorServices(params)), [dispatch]);
+  const loadBookings = useCallback((params) => dispatch(fetchVendorBookings(params)), [dispatch]);
 
   useEffect(() => {
     loadProfile();
@@ -63,7 +67,7 @@ export function useVendorWorkspace() {
     async (isAvailable) => {
       const response = await updateVendorAvailability({ isAvailable });
       await dispatch(fetchVendorProfile());
-      return response.data.profile;
+      return response.data?.profile;
     },
     [dispatch]
   );
@@ -83,14 +87,24 @@ export function useVendorWorkspace() {
 
   const deleteService = useCallback(
     async (id) => {
-      await dispatch(removeVendorService(id));
+      const result = await dispatch(removeVendorService(id));
+      if (removeVendorService.rejected.match(result)) {
+        const err = new Error(result.payload?.message || "Delete failed");
+        err.response = { data: result.payload };
+        throw err;
+      }
     },
     [dispatch]
   );
 
   const respondBooking = useCallback(
     async (bookingId, accept) => {
-      await dispatch(respondVendorBooking({ bookingId, accept }));
+      const result = await dispatch(respondVendorBooking({ bookingId, accept }));
+      if (respondVendorBooking.rejected.match(result)) {
+        const err = new Error(result.payload?.message || "Update failed");
+        err.response = { data: result.payload };
+        throw err;
+      }
       await loadBookings();
     },
     [dispatch, loadBookings]
@@ -124,6 +138,8 @@ export function useVendorWorkspace() {
     profile,
     services,
     bookings,
+    servicesPagination,
+    bookingsPagination,
     message,
     error,
     loadProfile,

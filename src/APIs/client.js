@@ -93,12 +93,21 @@ apiClient.interceptors.response.use(
         const { data } = await apiClient.post("/auth/refresh", null, {
           skipGlobalLoader: true,
         });
-        const newToken = data.data.accessToken;
+        const newToken = data?.data?.accessToken;
+        if (!newToken) {
+          throw new Error("Refresh did not return an access token");
+        }
         setAccessToken(newToken);
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
+        if (refreshError?.response?.data?.errorCode === "SESSION_EXPIRED") {
+          setAccessToken(null);
+          if (typeof window !== "undefined" && !window.location.pathname.includes("/signin")) {
+            window.location.assign("/signin?reason=idle");
+          }
+        }
         processQueue(refreshError, null);
         setAccessToken(null);
         return Promise.reject(refreshError);

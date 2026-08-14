@@ -7,6 +7,8 @@ import AppCard from "../../components/ui/AppCard";
 import { LoadingState } from "../../components/ui/LoadingState";
 import { PageHeader, StatusBadge } from "../../components/ui/PageBits";
 import { mediaUrl } from "../../utils/mediaUrl";
+import NotFoundPage from "../NotFoundPage";
+import { asArray, formatLabel, resourceId } from "../../utils/safe";
 
 export default function VendorDetailPage() {
   const { vendorId } = useParams();
@@ -16,13 +18,22 @@ export default function VendorDetailPage() {
     loadOne(vendorId);
   }, [vendorId, loadOne]);
 
+  if (loading) return <LoadingState label="Loading vendor..." />;
+  if (!vendor) {
+    return (
+      <NotFoundPage
+        embedded
+        title="Vendor not found"
+        subtitle="This vendor is unavailable, not approved yet, or the link may be incorrect. Go back, refresh, or return home."
+      />
+    );
+  }
   if (error) return <Alert message={error} />;
-  if (loading || !vendor) return <LoadingState label="Loading vendor..." />;
 
   return (
     <div>
       <PageHeader
-        title={vendor.businessName}
+        title={vendor.businessName || "Vendor"}
         subtitle={vendor.city || "Event vendor"}
         actions={<StatusBadge status={vendor.approvalStatus} />}
       />
@@ -32,14 +43,14 @@ export default function VendorDetailPage() {
         </Typography>
       </AppCard>
 
-      {(vendor.portfolio || []).length > 0 && (
+      {asArray(vendor.portfolio).length > 0 && (
         <>
           <Typography variant="h6" className="mb-3 mt-8">
             Proof gallery
           </Typography>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {vendor.portfolio.map((item) => (
-              <div key={item.id} className="overflow-hidden rounded-xl border border-border bg-card">
+            {asArray(vendor.portfolio).map((item, index) => (
+              <div key={resourceId(item, `proof-${index}`)} className="overflow-hidden rounded-xl border border-border bg-card">
                 <img
                   src={mediaUrl(item.url)}
                   alt={item.caption || "Proof"}
@@ -67,23 +78,26 @@ export default function VendorDetailPage() {
         Services
       </Typography>
       <div className="space-y-3">
-        {(vendor.services || []).map((service) => (
-          <AppCard key={service.id} contentClassName="p-4">
+        {asArray(vendor.services).map((service, index) => (
+          <AppCard key={resourceId(service, `service-${index}`)} contentClassName="p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <Typography variant="subtitle1" className="font-medium">
-                  {service.title}
+                  {service?.title || "Service"}
                 </Typography>
                 <Typography variant="body2" className="capitalize text-muted-foreground">
-                  {service.category.replaceAll("_", " ")}
+                  {formatLabel(service?.category) || "Category"}
                 </Typography>
               </div>
               <Typography variant="body2" className="text-accent">
-                ₹{service.priceFrom} – ₹{service.priceTo}
+                ₹{service?.priceFrom ?? 0} – ₹{service?.priceTo ?? 0}
               </Typography>
             </div>
           </AppCard>
         ))}
+        {!asArray(vendor.services).length && (
+          <p className="text-sm text-muted-foreground">No services listed yet.</p>
+        )}
       </div>
     </div>
   );

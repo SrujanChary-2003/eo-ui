@@ -1,10 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import * as vendorsApi from "../../apis/vendors/vendors.api";
+import { emptyPagination, readPagination } from "../../utils/pagination";
 
 export const fetchVendors = createAsyncThunk("vendors/list", async (params = {}, { rejectWithValue }) => {
   try {
     const response = await vendorsApi.getVendors(params);
-    return response.data.vendors || [];
+    return {
+      vendors: response.data?.vendors || [],
+      pagination: readPagination(response.data),
+    };
   } catch (err) {
     return rejectWithValue(err.response?.data || { message: "Failed to load vendors" });
   }
@@ -13,7 +17,7 @@ export const fetchVendors = createAsyncThunk("vendors/list", async (params = {},
 export const fetchVendorById = createAsyncThunk("vendors/detail", async (vendorId, { rejectWithValue }) => {
   try {
     const response = await vendorsApi.getVendorById(vendorId);
-    return response.data.vendor;
+    return response.data?.vendor;
   } catch (err) {
     return rejectWithValue(err.response?.data || { message: "Vendor not found" });
   }
@@ -23,6 +27,7 @@ const vendorsSlice = createSlice({
   name: "vendors",
   initialState: {
     list: [],
+    pagination: emptyPagination,
     current: null,
     loading: false,
     error: null,
@@ -40,16 +45,25 @@ const vendorsSlice = createSlice({
       })
       .addCase(fetchVendors.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = Array.isArray(action.payload?.vendors) ? action.payload.vendors : [];
+        state.pagination = action.payload?.pagination || emptyPagination;
       })
       .addCase(fetchVendors.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to load vendors";
       })
+      .addCase(fetchVendorById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.current = null;
+      })
       .addCase(fetchVendorById.fulfilled, (state, action) => {
-        state.current = action.payload;
+        state.loading = false;
+        state.current = action.payload || null;
       })
       .addCase(fetchVendorById.rejected, (state, action) => {
+        state.loading = false;
+        state.current = null;
         state.error = action.payload?.message || "Vendor not found";
       });
   },

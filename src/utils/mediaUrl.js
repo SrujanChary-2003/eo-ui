@@ -5,14 +5,15 @@
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://localhost:3000";
 
 export function mediaUrl(path) {
-  if (!path) return "";
+  if (path == null || path === "") return "";
+  const value = String(path);
   if (
-    path.startsWith("http://") ||
-    path.startsWith("https://") ||
-    path.startsWith("blob:") ||
-    path.startsWith("data:")
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:") ||
+    value.startsWith("data:")
   ) {
-    return path;
+    return value;
   }
-  return `${API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
+  return `${API_ORIGIN}${value.startsWith("/") ? value : `/${value}`}`;
 }

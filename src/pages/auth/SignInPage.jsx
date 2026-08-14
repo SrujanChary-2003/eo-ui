@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Typography } from "@onesaz/ui";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/ui/Button";
@@ -12,6 +12,9 @@ import { toastError, toastSuccess } from "../../utils/toast";
 export default function SignInPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const idleNotice = Boolean(location.state?.idle || searchParams.get("reason") === "idle");
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -61,6 +64,11 @@ export default function SignInPage() {
         Sign in to manage your events and bookings.
       </Typography>
 
+      {idleNotice && !error && (
+        <div className="mb-4">
+          <Alert message="You were signed out after 30 minutes of inactivity. Please sign in again." />
+        </div>
+      )}
       {error && (
         <div className="mb-4">
           <Alert message={error} />

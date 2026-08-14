@@ -68,3 +68,37 @@ export function PageHeader({ title, subtitle, actions }) {
     </div>
   );
 }
+
+export function PaginationBar({ pagination, onPage, disabled }) {
+  const page = Number(pagination?.page) || 1;
+  const totalPages = Number(pagination?.totalPages) || 1;
+  const total = Number(pagination?.total) || 0;
+  if (totalPages <= 1 && total <= (pagination?.limit || 0)) return null;
+
+  return (
+    <div className="mt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
+      <p className="text-sm text-[var(--app-muted)]">
+        Page {page} of {totalPages}
+        {total ? ` · ${total} total` : ""}
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={disabled || page <= 1}
+          onClick={() => onPage(page - 1)}
+          className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm disabled:opacity-40"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          disabled={disabled || page >= totalPages}
+          onClick={() => onPage(page + 1)}
+          className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-sm disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import PublicRoute from "./PublicRoute";
 import PrivateRoute from "./PrivateRoute";
 import RoleRoute from "./RoleRoute";
@@ -23,11 +23,16 @@ import AdminEventsPage from "../pages/admin/AdminEventsPage";
 import AdminVendorsPage from "../pages/admin/AdminVendorsPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import ProfilePage from "../pages/ProfilePage";
+import NotFoundPage from "../pages/NotFoundPage";
 import RouteLoadingBridge from "../components/routing/RouteLoadingBridge";
+import ErrorBoundary from "../components/routing/ErrorBoundary";
+import IdleSessionGuard from "../components/routing/IdleSessionGuard";
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
+      <ErrorBoundary>
+      <IdleSessionGuard />
       <RouteLoadingBridge />
       <Routes>
         <Route element={<PublicLayout />}>
@@ -70,8 +75,9 @@ export default function AppRoutes() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

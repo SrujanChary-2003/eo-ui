@@ -13,6 +13,7 @@ import ImageCropper from "../../components/media/ImageCropper";
 import { PageHeader, StatusBadge } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
 import { mediaUrl } from "../../utils/mediaUrl";
+import { asArray, formatLabel, resourceId } from "../../utils/safe";
 
 export default function VendorProfilePage() {
   const {
@@ -103,7 +104,7 @@ export default function VendorProfilePage() {
     }
   };
 
-  const categoryOptions = (catalog.serviceCategories || []).map((c) => ({
+  const categoryOptions = asArray(catalog?.serviceCategories).map((c) => ({
     value: c.value,
     label: c.label,
   }));
@@ -166,8 +167,10 @@ export default function VendorProfilePage() {
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {(profile?.portfolio || []).map((item) => (
-            <div key={item.id} className="overflow-hidden rounded-xl border border-border bg-muted/20">
+          {asArray(profile?.portfolio).map((item, index) => {
+            const proofId = resourceId(item);
+            return (
+            <div key={proofId || `proof-${index}`} className="overflow-hidden rounded-xl border border-border bg-muted/20">
               <img
                 src={mediaUrl(item.url)}
                 alt={item.caption || "Proof"}
@@ -187,12 +190,15 @@ export default function VendorProfilePage() {
                   {item.caption || "Untitled"}
                 </Typography>
                 <Typography variant="caption" className="capitalize text-muted-foreground">
-                  {item.eventName || "Past event"} · {String(item.category || "").replaceAll("_", " ")}
+                  {item?.eventName || "Past event"} · {formatLabel(item?.category)}
                 </Typography>
-                <Button variant="ghost" className="w-full" onClick={() => removeProof(item.id)}>Remove</Button>
+                {proofId ? (
+                <Button variant="ghost" className="w-full" onClick={() => removeProof(proofId)}>Remove</Button>
+                ) : null}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </AppCard>
 

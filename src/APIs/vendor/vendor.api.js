@@ -30,8 +30,8 @@ export async function declineBooking(bookingId) {
   return data;
 }
 
-export async function getVendorServices() {
-  const { data } = await apiClient.get("/vendor/services");
+export async function getVendorServices(params = {}) {
+  const { data } = await apiClient.get("/vendor/services", { params });
   return data;
 }
 

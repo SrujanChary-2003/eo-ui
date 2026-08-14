@@ -8,6 +8,7 @@ export default function ConfirmDialog({
   cancelLabel = "Cancel",
   confirmVariant = "primary",
   loading = false,
+  children,
   onConfirm,
   onCancel,
 }) {
@@ -36,6 +37,7 @@ export default function ConfirmDialog({
             {message}
           </p>
         ) : null}
+        {children ? <div className="mt-3">{children}</div> : null}
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             {cancelLabel}

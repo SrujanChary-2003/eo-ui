@@ -8,13 +8,13 @@ export const bootstrapAuth = createAsyncThunk("auth/bootstrap", async (_, { reje
     if (token) {
       try {
         const response = await authApi.getCurrentUser();
-        return response.data.user;
+        return response.data?.user;
       } catch {
         // continue to refresh
       }
     }
     const refreshed = await authApi.refreshToken();
-    return refreshed.data.user;
+    return refreshed.data?.user;
   } catch (err) {
     setAccessToken(null);
     return rejectWithValue(err.response?.data || { message: "Session expired" });
@@ -24,7 +24,7 @@ export const bootstrapAuth = createAsyncThunk("auth/bootstrap", async (_, { reje
 export const loginUser = createAsyncThunk("auth/login", async (credentials, { rejectWithValue }) => {
   try {
     const response = await authApi.login(credentials);
-    return response.data.user;
+    return response.data?.user;
   } catch (err) {
     return rejectWithValue(err.response?.data || { message: "Login failed" });
   }
@@ -87,14 +87,16 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(bootstrapAuth.rejected, (state) => {
-        state.user = null;
         state.loading = false;
+        if (!state.user) state.user = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.user = action.payload;
+        state.loading = false;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload;
       })
       .addCase(logoutUser.fulfilled, (state) => {

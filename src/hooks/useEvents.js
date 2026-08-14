@@ -7,6 +7,7 @@ import {
   selectEvents,
   selectEventsError,
   selectEventsLoading,
+  selectEventsPagination,
 } from "../store/selectors";
 import {
   clearCurrentEvent,
@@ -22,6 +23,7 @@ import {
 export function useEvents(autoLoad = true) {
   const dispatch = useAppDispatch();
   const events = useAppSelector(selectEvents);
+  const pagination = useAppSelector(selectEventsPagination);
   const current = useAppSelector(selectCurrentEvent);
   const catalog = useAppSelector(selectEventCatalog);
   const loading = useAppSelector(selectEventsLoading);
@@ -91,6 +93,7 @@ export function useEvents(autoLoad = true) {
 
   return {
     events,
+    pagination,
     current,
     catalog,
     loading,

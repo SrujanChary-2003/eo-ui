@@ -13,6 +13,7 @@ import AppCard from "../../components/ui/AppCard";
 import { PageHeader } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
 import { toastError, toastSuccess } from "../../utils/toast";
+import { asArray, formatLabel, resourceId } from "../../utils/safe";
 
 const STEPS = ["Details", "Services", "Vendors", "Review"];
 
@@ -66,14 +67,14 @@ export default function CreateEventPage() {
   }, [step, form.requiredCategories, load]);
 
   const eventTypeOptions = useMemo(
-    () => (catalog.eventTypes || []).map((t) => ({ value: t.value, label: t.label })),
+    () => asArray(catalog?.eventTypes).map((t) => ({ value: t.value, label: t.label })),
     [catalog.eventTypes]
   );
 
   const filteredVendors = useMemo(() => {
-    if (!form.requiredCategories.length) return vendors;
-    return vendors.filter((v) =>
-      (v.services || []).some((s) => form.requiredCategories.includes(s.category))
+    if (!form.requiredCategories.length) return asArray(vendors);
+    return asArray(vendors).filter((v) =>
+      asArray(v?.services).some((s) => form.requiredCategories.includes(s?.category))
     );
   }, [vendors, form.requiredCategories]);
 
@@ -382,7 +383,7 @@ export default function CreateEventPage() {
             What do you need for this event?
           </Typography>
           <div className="grid gap-3 sm:grid-cols-2">
-            {(catalog.serviceCategories || []).map((cat) => {
+            {asArray(catalog?.serviceCategories).map((cat) => {
               const active = form.requiredCategories.includes(cat.value);
               return (
                 <Chip
@@ -412,22 +413,23 @@ export default function CreateEventPage() {
           {!filteredVendors.length && (
             <Alert message="No approved vendors match yet. Ask vendors to list services, or continue after admin approves vendors." />
           )}
-          {filteredVendors.map((vendor) => (
-            <AppCard key={vendor.id} contentClassName="p-5">
-              <Typography variant="h6">{vendor.businessName}</Typography>
+          {asArray(filteredVendors).map((vendor, vendorIndex) => (
+            <AppCard key={resourceId(vendor, `vendor-${vendorIndex}`)} contentClassName="p-5">
+              <Typography variant="h6">{vendor?.businessName || "Vendor"}</Typography>
               <Typography variant="body2" className="text-muted-foreground">
-                {vendor.city || "—"} · {vendor.description || "No description"}
+                {vendor?.city || "—"} · {vendor?.description || "No description"}
               </Typography>
               <div className="mt-4 space-y-2">
-                {(vendor.services || [])
-                  .filter((s) => form.requiredCategories.includes(s.category))
-                  .map((service) => {
-                    const selected = selectedServices.some((s) => s.serviceId === service.id);
+                {asArray(vendor?.services)
+                  .filter((s) => form.requiredCategories.includes(s?.category))
+                  .map((service, serviceIndex) => {
+                    const serviceId = resourceId(service);
+                    const selected = selectedServices.some((s) => s.serviceId === serviceId);
                     return (
                       <button
-                        key={service.id}
+                        key={serviceId || `service-${serviceIndex}`}
                         type="button"
-                        onClick={() => toggleService({ ...service, _vendorName: vendor.businessName })}
+                        onClick={() => serviceId && toggleService({ ...service, _vendorName: vendor.businessName })}
                         className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
                           selected
                             ? "border-accent bg-accent/10"
@@ -435,13 +437,13 @@ export default function CreateEventPage() {
                         }`}
                       >
                         <span>
-                          <span className="font-medium text-foreground">{service.title}</span>
+                          <span className="font-medium text-foreground">{service?.title || "Service"}</span>
                           <span className="ml-2 capitalize text-muted-foreground">
-                            {service.category.replaceAll("_", " ")}
+                            {formatLabel(service?.category)}
                           </span>
                         </span>
                         <span className="text-muted-foreground">
-                          ₹{service.priceFrom}–₹{service.priceTo}
+                          ₹{service?.priceFrom ?? 0}–₹{service?.priceTo ?? 0}
                         </span>
                       </button>
                     );
@@ -462,18 +464,18 @@ export default function CreateEventPage() {
 
       {step === 3 && (
         <AppCard>
-          <Typography variant="h5">{form.title}</Typography>
+          <Typography variant="h5">{form.title || "Untitled event"}</Typography>
           <Typography variant="body2" className="mt-1 capitalize text-muted-foreground">
-            {form.eventType.replaceAll("_", " ")} · {form.venueType} · {form.location}
+            {formatLabel(form.eventType) || "Event"} · {form.venueType || "Venue"} · {form.location || "Location TBA"}
           </Typography>
           <div className="mt-4">
             <Typography variant="body2" className="text-muted-foreground">
               Selected services
             </Typography>
             <ul className="mt-2 space-y-1 text-sm text-foreground">
-              {selectedServices.map((s) => (
-                <li key={s.serviceId}>
-                  {s.title} · {s.vendorName}
+              {asArray(selectedServices).map((s, index) => (
+                <li key={s?.serviceId || `selected-${index}`}>
+                  {s?.title || "Service"} · {s?.vendorName || "Vendor"}
                 </li>
               ))}
             </ul>

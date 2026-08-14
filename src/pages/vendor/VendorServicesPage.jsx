@@ -8,11 +8,13 @@ import Input from "../../components/ui/Input";
 import AppCombobox from "../../components/ui/AppCombobox";
 import AppTextarea from "../../components/ui/AppTextarea";
 import AppCard from "../../components/ui/AppCard";
-import { EmptyState, PageHeader, StatusBadge } from "../../components/ui/PageBits";
+import { EmptyState, PageHeader, PaginationBar, StatusBadge } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
+import { asArray, formatLabel, resourceId } from "../../utils/safe";
+import { PAGE_SIZE } from "../../utils/pagination";
 
 export default function VendorServicesPage() {
-  const { services, message, loadServices, createService, deleteService, clearMessage } =
+  const { services, servicesPagination, message, loadServices, createService, deleteService, clearMessage } =
     useVendorWorkspace();
   const { catalog, loadCatalog } = useEvents(false);
   const [error, setError] = useState("");
@@ -24,13 +26,15 @@ export default function VendorServicesPage() {
     priceTo: "",
   });
 
-  useEffect(() => {
-    loadServices();
-    loadCatalog();
-  }, [loadServices, loadCatalog]);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (catalog.serviceCategories?.[0] && form.category === "photography") {
+    loadServices({ page, limit: PAGE_SIZE });
+    loadCatalog();
+  }, [loadServices, loadCatalog, page]);
+
+  useEffect(() => {
+    if (catalog?.serviceCategories?.[0] && form.category === "photography") {
       setForm((f) => ({ ...f, category: catalog.serviceCategories[0].value }));
     }
   }, [catalog.serviceCategories]);
@@ -51,7 +55,7 @@ export default function VendorServicesPage() {
     }
   };
 
-  const categoryOptions = (catalog.serviceCategories || []).map((c) => ({
+  const categoryOptions = asArray(catalog?.serviceCategories).map((c) => ({
     value: c.value,
     label: c.label,
   }));
@@ -109,32 +113,35 @@ export default function VendorServicesPage() {
         </form>
       </AppCard>
 
-      {!services.length && (
+      {!asArray(services).length && (
         <EmptyState title="No services yet">
           Add your first offering so customers can book you.
         </EmptyState>
       )}
 
       <div className="space-y-3">
-        {services.map((service) => (
-          <AppCard key={service.id} contentClassName="flex flex-wrap items-center justify-between gap-3 p-4">
+        {asArray(services).map((service, index) => (
+          <AppCard key={resourceId(service, `service-${index}`)} contentClassName="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <Typography variant="subtitle1" className="font-medium">
-                {service.title}
+                {service?.title || "Untitled service"}
               </Typography>
               <Typography variant="body2" className="capitalize text-muted-foreground">
-                {service.category.replaceAll("_", " ")} · ₹{service.priceFrom}–₹{service.priceTo}
+                {formatLabel(service?.category) || "Category"} · ₹{service?.priceFrom ?? 0}–₹{service?.priceTo ?? 0}
               </Typography>
             </div>
             <div className="flex items-center gap-2">
-              <StatusBadge status={service.isActive ? "approved" : "draft"} />
-              <Button variant="ghost" onClick={() => deleteService(service.id)}>
-                Delete
-              </Button>
+              <StatusBadge status={service?.isActive ? "approved" : "draft"} />
+              {resourceId(service) ? (
+                <Button variant="ghost" onClick={() => deleteService(resourceId(service))}>
+                  Delete
+                </Button>
+              ) : null}
             </div>
           </AppCard>
         ))}
       </div>
+      <PaginationBar pagination={servicesPagination} onPage={setPage} />
     </div>
   );
 }

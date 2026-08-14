@@ -3,8 +3,11 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   selectAdminError,
   selectAdminEvents,
+  selectAdminEventsPagination,
   selectAdminUsers,
+  selectAdminUsersPagination,
   selectAdminVendors,
+  selectAdminVendorsPagination,
 } from "../store/selectors";
 import {
   fetchAdminEvents,
@@ -20,6 +23,9 @@ export function useAdmin() {
   const users = useAppSelector(selectAdminUsers);
   const vendors = useAppSelector(selectAdminVendors);
   const events = useAppSelector(selectAdminEvents);
+  const usersPagination = useAppSelector(selectAdminUsersPagination);
+  const vendorsPagination = useAppSelector(selectAdminVendorsPagination);
+  const eventsPagination = useAppSelector(selectAdminEventsPagination);
   const error = useAppSelector(selectAdminError);
 
   const loadUsers = useCallback((params) => dispatch(fetchAdminUsers(params)), [dispatch]);
@@ -48,6 +54,9 @@ export function useAdmin() {
     users,
     vendors,
     events,
+    usersPagination,
+    vendorsPagination,
+    eventsPagination,
     error,
     loadUsers,
     loadVendors,

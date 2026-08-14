@@ -16,8 +16,8 @@ export function useProfile() {
     setError("");
     try {
       const response = await profileApi.getProfile();
-      dispatch(setUser(response.data.user));
-      return response.data.user;
+      dispatch(setUser(response.data?.user));
+      return response.data?.user;
     } catch (err) {
       const msg = getApiErrorMessage(err, "Failed to load profile");
       setError(msg);
@@ -35,11 +35,11 @@ export function useProfile() {
       setMessage("");
       try {
         const response = await profileApi.updateProfile(payload);
-        dispatch(setUser(response.data.user));
+        dispatch(setUser(response.data?.user));
         const msg = response.message || "Profile updated";
         setMessage(msg);
         toastSuccess(msg);
-        return response.data.user;
+        return response.data?.user;
       } catch (err) {
         const msg = getApiErrorMessage(err, "Failed to update profile");
         setError(msg);
@@ -59,11 +59,11 @@ export function useProfile() {
       setMessage("");
       try {
         const response = await profileApi.uploadAvatar(image);
-        dispatch(setUser(response.data.user));
+        dispatch(setUser(response.data?.user));
         const msg = response.message || "Avatar updated";
         setMessage(msg);
         toastSuccess(msg);
-        return response.data.user;
+        return response.data?.user;
       } catch (err) {
         const msg = getApiErrorMessage(err, "Failed to upload avatar");
         setError(msg);
@@ -82,11 +82,11 @@ export function useProfile() {
     setMessage("");
     try {
       const response = await profileApi.deleteAvatar();
-      dispatch(setUser(response.data.user));
+      dispatch(setUser(response.data?.user));
       const msg = response.message || "Avatar removed";
       setMessage(msg);
       toastSuccess(msg);
-      return response.data.user;
+      return response.data?.user;
     } catch (err) {
       const msg = getApiErrorMessage(err, "Failed to remove avatar");
       setError(msg);

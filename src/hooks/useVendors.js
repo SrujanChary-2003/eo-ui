@@ -5,12 +5,14 @@ import {
   selectVendors,
   selectVendorsError,
   selectVendorsLoading,
+  selectVendorsPagination,
 } from "../store/selectors";
 import { fetchVendorById, fetchVendors } from "../store/slices/vendorsSlice";
 
 export function useVendors(autoLoad = false) {
   const dispatch = useAppDispatch();
   const vendors = useAppSelector(selectVendors);
+  const pagination = useAppSelector(selectVendorsPagination);
   const current = useAppSelector(selectCurrentVendor);
   const loading = useAppSelector(selectVendorsLoading);
   const error = useAppSelector(selectVendorsError);
@@ -26,5 +28,5 @@ export function useVendors(autoLoad = false) {
     if (autoLoad) load();
   }, [autoLoad, load]);
 
-  return { vendors, current, loading, error, load, loadOne };
+  return { vendors, pagination, current, loading, error, load, loadOne };
 }

@@ -11,6 +11,8 @@ import { LoadingState } from "../../components/ui/LoadingState";
 import { PageHeader, StatusBadge } from "../../components/ui/PageBits";
 import { getApiErrorMessage } from "../../utils/authErrors";
 import { toastError, toastSuccess } from "../../utils/toast";
+import NotFoundPage from "../NotFoundPage";
+import { asArray, formatDate, formatLabel, resourceId } from "../../utils/safe";
 
 export default function EventDetailPage() {
   const { eventId } = useParams();
@@ -62,14 +64,20 @@ export default function EventDetailPage() {
   }
 
   if (!event) {
-    return <Alert message={actionError || error || "Event not found"} />;
+    return (
+      <NotFoundPage
+        embedded
+        title="Event not found"
+        subtitle="This event may have been removed, or you may not have access. Go back, refresh, or return home."
+      />
+    );
   }
 
   return (
     <div>
       <PageHeader
-        title={event.title}
-        subtitle={`${String(event.eventType || "").replaceAll("_", " ")} · ${event.location}`}
+        title={event.title || "Untitled event"}
+        subtitle={`${formatLabel(event.eventType) || "Event"} · ${event.location || "Location TBA"}`}
         actions={<StatusBadge status={event.status} />}
       />
 
@@ -87,7 +95,7 @@ export default function EventDetailPage() {
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <p className="text-muted-foreground">Date</p>
-              <p className="text-foreground">{new Date(event.eventDate).toLocaleString()}</p>
+              <p className="text-foreground">{formatDate(event.eventDate)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">City</p>
@@ -112,22 +120,22 @@ export default function EventDetailPage() {
         <AppCard contentClassName="p-6">
           <Typography variant="h6">Selected vendors</Typography>
           <ul className="mt-3 space-y-3">
-            {(event.selectedVendors || []).map((sv) => (
-              <li key={sv._id || sv.service} className="rounded-xl border border-border p-3 text-sm">
+            {asArray(event.selectedVendors).map((sv, index) => (
+              <li key={resourceId(sv, sv?.service, `sv-${index}`)} className="rounded-xl border border-border p-3 text-sm">
                 <Typography variant="body2" className="capitalize text-foreground">
-                  {sv.category?.replaceAll("_", " ")}
+                  {formatLabel(sv?.category) || "Service"}
                 </Typography>
-                <StatusBadge status={sv.status} />
+                <StatusBadge status={sv?.status} />
               </li>
             ))}
-            {!event.selectedVendors?.length && (
+            {!asArray(event.selectedVendors).length && (
               <p className="text-sm text-muted-foreground">None selected</p>
             )}
           </ul>
 
           {user?.role === "customer" && (
             <div className="mt-6 space-y-2">
-              {["draft", "rejected"].includes(event.status) && (
+              {["draft", "rejected"].includes(event.status || "") && (
                 <>
                   <Button className="w-full" onClick={submit} loading={acting}>
                     Submit for approval

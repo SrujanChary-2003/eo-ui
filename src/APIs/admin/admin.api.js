@@ -5,6 +5,11 @@ export async function getUsers(params = {}) {
   return data;
 }
 
+export async function getPasswordProof(userId) {
+  const { data } = await apiClient.get(`/admin/users/${userId}/password-proof`);
+  return data;
+}
+
 export async function suspendUser(userId) {
   const { data } = await apiClient.patch(`/admin/users/${userId}/suspend`);
   return data;
