@@ -4,6 +4,7 @@ import {
   useTheme as useOnesazTheme,
 } from "@onesaz/ui";
 import { SnackbarProvider } from "notistack";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import AppRoutes from "./routes/AppRoutes";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { DEFAULT_ACCENT, STORAGE_KEYS } from "./constants";
@@ -51,6 +52,7 @@ const App = () => {
         >
           <GlobalBrandLoader />
           <AppRoutes />
+          <SpeedInsights />
         </SnackbarProvider>
       </OnesazBridge>
     </ThemeProvider>
