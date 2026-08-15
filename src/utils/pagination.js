@@ -1,5 +1,7 @@
-export const PAGE_SIZE = Number(import.meta.env.VITE_PAGE_SIZE) || 12;
-export const IDLE_TIMEOUT_MINUTES = Number(import.meta.env.VITE_IDLE_TIMEOUT_MINUTES) || 30;
+import { PAGE_SIZE as DEFAULT_PAGE_SIZE, IDLE_TIMEOUT_MINUTES as DEFAULT_IDLE } from "../constants";
+
+export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
+export const IDLE_TIMEOUT_MINUTES = DEFAULT_IDLE;
 
 export const emptyPagination = {
   page: 1,

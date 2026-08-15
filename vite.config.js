@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
     define: {
       "import.meta.env.VITE_API_URL": JSON.stringify(apiUrl),
       "import.meta.env.VITE_API_ORIGIN": JSON.stringify(apiOrigin),
-      "import.meta.env.VITE_APP_ENV": JSON.stringify(env.VITE_APP_ENV || mode),
+      "import.meta.env.VITE_APP_ENV": JSON.stringify(mode),
     },
     server: {
       host: true,

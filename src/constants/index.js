@@ -2,6 +2,9 @@ export const APP_NAME = "EventSphere";
 export const APP_SHORT_NAME = "ES";
 export const APP_TAGLINE = "Plan events, book vendors, celebrate.";
 
+export const PAGE_SIZE = 12;
+export const IDLE_TIMEOUT_MINUTES = 30;
+
 export const STORAGE_KEYS = {
   THEME_MODE: "eo-theme-mode",
   ACCENT_COLOR: "eo-accent-color",
