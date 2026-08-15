@@ -5,7 +5,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { store } from "./store";
 import { bootstrapAuth } from "./store/slices/authSlice";
-import { injectStore } from "./APIs/client";
+import { injectStore } from "./apis/client";
 
 injectStore(store);
 store.dispatch(bootstrapAuth());
