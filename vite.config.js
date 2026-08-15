@@ -4,7 +4,20 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const require = createRequire(import.meta.url);
-const network = require("../eo-backend/config/network.config.js");
+
+function loadNetwork() {
+  try {
+    return require("../eo-backend/config/network.config.js");
+  } catch {
+    return {
+      lanHost: "localhost",
+      backendPort: 3000,
+      frontendPort: 5173,
+    };
+  }
+}
+
+const network = loadNetwork();
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");

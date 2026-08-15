@@ -66,7 +66,7 @@ export default function SignInPage() {
 
       {idleNotice && !error && (
         <div className="mb-4">
-          <Alert message="You were signed out after 30 minutes of inactivity. Please sign in again." />
+          <Alert message="Session expired. Please login again." />
         </div>
       )}
       {error && (
